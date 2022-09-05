@@ -1,16 +1,11 @@
 module Lasercutter where
 
-import Text.HTML.TagSoup.Tree
-import Data.Text (Text)
-import GHC.Base (liftA2, join)
-import Control.Applicative (liftA)
-import Data.Maybe (isJust, mapMaybe, fromMaybe, listToMaybe, catMaybes)
-import Data.Void (absurd)
-import Text.HTML.TagSoup (Tag(TagText))
-import Data.Bool (bool)
-import Debug.Trace (trace)
 import Control.Applicative
-import Data.Foldable (asum)
+import Data.Bool (bool)
+import Data.Maybe (isJust, mapMaybe, listToMaybe, catMaybes)
+import Data.Text (Text)
+import Text.HTML.TagSoup (Tag(TagText))
+import Text.HTML.TagSoup.Tree
 
 
 data Selector
@@ -108,7 +103,7 @@ getResult :: Parser a -> Maybe a
 getResult (Pure a) =  pure a
 getResult (LiftA2 f a b) =  liftA2 f (getResult a) (getResult b)
 getResult (Match _) = Nothing
-getResult (Find _ _) = Nothing
+getResult (Find _ _) = Just Nothing
 getResult (OnChildren p) =
   case getResult p of
     Just a -> pure [a]
@@ -116,8 +111,9 @@ getResult (OnChildren p) =
 getResult (Project _) = Nothing
 getResult (Try p) = Just $ getResult p
 getResult (FromMaybe a ma) = case getResult ma of
-  Nothing -> getResult a
-  Just m_a -> m_a
+  Nothing -> Nothing
+  Just Nothing -> getResult a
+  Just (Just z) -> Just z
 getResult Fail = Nothing
 
 getChildren :: TagTree Text -> [TagTree Text]
@@ -170,8 +166,5 @@ asIs = Project id
 
 main :: IO ()
 main = print $ runParser example $
-    (Find (HasTag "h2") $ singular $ OnChildren getText) <|>
-    (Find (HasTag "h1") $ singular $ OnChildren getText)
-
-
+  Fail <|> pure True
 
