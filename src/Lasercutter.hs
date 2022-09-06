@@ -31,9 +31,7 @@ data Parser t a where
   Project    :: (t -> a) -> Parser t a
   Expect     :: Parser t (Maybe a) -> Parser t a
   -- FromMaybe  :: Parser t a -> Parser t (Maybe a) -> Parser t a
-  Alt        :: Parser t b -> Parser t c -> Parser t (Either b c)
   Fail       :: Parser t a
-  NoResult   :: Parser t (Maybe a)
 
 instance Show (Parser t a) where
   show = anythingToString
@@ -48,8 +46,8 @@ instance Applicative (Parser t) where
   liftA2 f a b    = LiftA2 f a b
 
 instance Alternative (Parser t) where
-  empty = Fail
-  pa1 <|> pa2 = fromMaybe <$> pa2 <*> Try pa1
+  empty = Expect $ pure Nothing
+  pa1 <|> pa2 = expect $ maybe <$> try pa2 <*> pure Just <*> try pa1
 
 
 matchSelector :: Selector -> TagTree Text -> Bool
@@ -78,16 +76,10 @@ split p0@(Find se pa) tt
   = bind (fmap Just) $ split pa tt
   | otherwise
   = Bind p0 $ pure . listToMaybe . catMaybes
-split (Expect pa) tt  = bind Expect $ split pa tt
+split (Expect pa) tt  = bind expect $ split pa tt
 split (OnChildren pa') _  = Bind pa' pure
-split NoResult _          = Bind (pure ()) $ const $ NoResult
 split (Try pa) tt         = split (try pa) tt
 split (Project f) tt      = Bind (pure ()) $ const $ pure $ f tt
-split (Alt a1 a2) tt =
-  case (split a1 tt, split a2 tt) of
-    (Bind a1' ka1, Bind a2' ka2) ->
-      Bind (Alt a1' a2') $ \(partitionEithers -> (bs, cs)) ->
-        Alt (ka1 bs) (ka2 cs)
 
 -- split (FromMaybe a ma) tt =
 --   case (split a tt, split ma tt) of
@@ -102,8 +94,14 @@ split (Alt a1 a2) tt =
       -- bind (FromMaybe a) $ split ma tt
 split Fail _              = Bind Fail $ const $ Fail
 
+expect :: Parser t (Maybe a) -> Parser t a
+expect (Try p) = p
+expect Fail = Fail
+expect p = Expect p
+
 try :: Parser t a -> Parser t (Maybe a)
 try Fail = pure Nothing
+try (Expect p) = p
 -- try (Try p) = Try (try p)
 -- try (FromMaybe a p) = FromMaybe (try a) $ try p
 -- try (LiftA2 f b c) = LiftA2 (liftA2 f) (try b) (try c)
@@ -112,6 +110,10 @@ try p    = fmap Just p
 
 bind :: (Parser t a -> Parser t b) -> Bind t a -> Bind t b
 bind f (Bind p k) = Bind p $ f . k
+
+-- expect :: Parser t (Maybe a) -> Parser t a
+-- expect (Alt a1 a2) = Alt _ _
+-- expect a = Expect a
 
 
 parseHTML :: IsTree t => Parser t a -> t -> Parser t a
@@ -134,7 +136,6 @@ getResult :: Parser t a -> Maybe a
 getResult (Pure a) =  pure a
 getResult (LiftA2 f a b) =  liftA2 f (getResult a) (getResult b)
 getResult (Find _ _) = Just Nothing
-getResult NoResult = Nothing
 getResult (Expect pa) = join $ getResult pa
 getResult (OnChildren p) =
   case getResult p of
@@ -142,7 +143,6 @@ getResult (OnChildren p) =
     _ -> Nothing
 getResult (Project _) = Nothing
 getResult (Try p) = Just $ getResult p
-getResult (Alt a1 a2) = maybe (fmap Right $ getResult a2) (Just . Left) $ getResult a1
 -- getResult (FromMaybe a ma) = case getResult ma of
 --   Nothing -> Nothing
 --   Just Nothing -> getResult a
@@ -171,13 +171,6 @@ example =
     ]
 
 
-expect :: Parser t (Maybe a) -> Parser t a
-expect = Expect
-
-fromMaybe' :: Parser t a -> Parser t (Maybe a) -> Parser t a
-fromMaybe' a2 a1 = fmap (either id id) $ Alt (Expect a1) a2
-
-
 
 at :: Text -> Parser (TagTree Text) a -> Parser (TagTree Text) [a]
 at t p
@@ -186,9 +179,6 @@ at t p
       <$> pure Nothing
       <*> fmap Just (OnChildren p)
       <*> Project (matchSelector $ HasTag t)
-
-singular :: Parser t [a] -> Parser t a
-singular = fromMaybe' Fail . fmap listToMaybe
 
 getText :: Parser (TagTree Text) Text
 getText =
@@ -206,11 +196,23 @@ asIs = Project id
 yo :: TagTree Text
 yo = TagBranch "yo" [] []
 
+
+failOnFalse :: a -> Parser t Bool -> Parser t a
+failOnFalse a p = Expect $ bool <$> pure Nothing <*> pure (Just a) <*> p
+
+
 main :: IO ()
 main = print $ runParser example $
+  asum
+    [ at "bad" asIs
+    , at "bad3" asIs
+    , at "html" asIs
+    , at "bad2" asIs
+    ]
 
-    at "html" asIs -- <|>
-    -- at "bad" asIs
+--     failOnFalse "good" (Project (matchSelector $ HasTag "html")) <|>
+--     failOnFalse @String "bad" (Project (matchSelector $ HasTag "bad")) <|> Fail
+-- --     -- at "bad" asIs
 
   -- getText <|> pure ""
 
