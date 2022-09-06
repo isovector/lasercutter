@@ -26,6 +26,7 @@ dependencies:
 - QuickCheck
 - hspec
 - checkers
+- recover-rtti
 
 default-extensions:
 - BangPatterns

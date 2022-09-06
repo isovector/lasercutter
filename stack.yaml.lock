@@ -3,7 +3,14 @@
 # For more information, please see the documentation at:
 #   https://docs.haskellstack.org/en/stable/lock_files
 
-packages: []
+packages:
+- completed:
+    hackage: recover-rtti-0.4.1.0@sha256:31997127810799666b01f1202efd77033d4737ebd83232d5b2389d2f4b332cf5,4606
+    pantry-tree:
+      size: 2487
+      sha256: 97ae15098c59f89ffbc43774e342d9b47aec6082fe3ef0f4554fd8a1908c0f1b
+  original:
+    hackage: recover-rtti-0.4.1.0@sha256:31997127810799666b01f1202efd77033d4737ebd83232d5b2389d2f4b332cf5,4606
 snapshots:
 - completed:
     size: 586286

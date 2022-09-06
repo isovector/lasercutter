@@ -3,3 +3,5 @@ resolver: lts-18.16
 packages:
 - .
 
+extra-deps:
+- recover-rtti-0.4.1.0@sha256:31997127810799666b01f1202efd77033d4737ebd83232d5b2389d2f4b332cf5,4606
