@@ -30,11 +30,14 @@ matchSelector (HasTag _)    (TagLeaf _)          = False
 matchSelector (HasAttr txt) (TagBranch _ x0 _)   = isJust $ lookup txt x0
 matchSelector (HasAttr _)   (TagLeaf _)          = False
 
-instance IsTree (TagTree t) where
+instance IsTree [t] (TagTree t) where
   getChildren (TagBranch _ _ tts) = tts
   getChildren (TagLeaf _) = []
 
-at :: Text -> Parser (TagTree Text) a -> Parser (TagTree Text) a
+  summarize (TagBranch t _ _) = [t]
+  summarize (TagLeaf _) = []
+
+at :: Text -> Parser [Text] (TagTree Text) a -> Parser [Text] (TagTree Text) a
 at t p
   = Expect
   $ bool
@@ -42,13 +45,13 @@ at t p
       <*> fmap Just p
       <*> Project (matchSelector $ HasTag t)
 
-text :: Parser (TagTree a) (Maybe a)
+text :: Parser [Text] (TagTree a) (Maybe a)
 text =
     Project (\case
           TagLeaf (TagText txt) -> Just txt
           _ -> Nothing)
 
-getText :: Parser (TagTree Text) Text
+getText :: Parser [Text] (TagTree Text) Text
 getText = Expect text
 
 example :: TagTree Text
@@ -74,15 +77,15 @@ example =
     ]
 
 
-chroots :: Selector -> Parser HTML a -> Parser HTML [a]
+chroots :: Selector -> Parser [Text] HTML a -> Parser [Text] HTML [a]
 chroots s = Target (matchSelector s)
 
 
-texts :: Parser HTML [Text]
+texts :: Parser [Text] HTML [Text]
 texts = Target isText getText
 
 
-texts' :: Selector -> Parser HTML [Text]
+texts' :: Selector -> Parser [Text] HTML [Text]
 texts' sel =
   fmap (catMaybes . join) $ Target (matchSelector sel) $ OnChildren text
 
@@ -91,7 +94,7 @@ isText (TagLeaf (TagText _)) = True
 isText _ = False
 
 
-textNoScript :: Parser HTML [Text]
+textNoScript :: Parser [Text] HTML [Text]
 textNoScript =
   asum
     [ at "h1" texts
@@ -102,4 +105,5 @@ textNoScript =
 
 main :: IO ()
 main = traverse_ (traverse_ print) $ runParser example $
-  Target (matchSelector $ HasTag "body") $ OnChildren textNoScript
+  Target isText $ bool <$> text <*> pure Nothing <*> fmap ((== ["script"]) . take 1) GetCrumbs
+
