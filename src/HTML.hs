@@ -30,14 +30,16 @@ matchSelector (HasTag _)    (TagLeaf _)          = False
 matchSelector (HasAttr txt) (TagBranch _ x0 _)   = isJust $ lookup txt x0
 matchSelector (HasAttr _)   (TagLeaf _)          = False
 
-instance IsTree [t] (TagTree t) where
+instance IsTree (TagTree t) where
+  type Crumbs (TagTree t) = [t]
+
   getChildren (TagBranch _ _ tts) = tts
   getChildren (TagLeaf _) = []
 
   summarize (TagBranch t _ _) = [t]
   summarize (TagLeaf _) = []
 
-at :: Text -> Parser [Text] (TagTree Text) a -> Parser [Text] (TagTree Text) a
+at :: Text -> Parser (TagTree Text) a -> Parser (TagTree Text) a
 at t p
   = Expect
   $ bool
@@ -45,13 +47,13 @@ at t p
       <*> fmap Just p
       <*> Project (matchSelector $ HasTag t)
 
-text :: Parser [Text] (TagTree a) (Maybe a)
+text :: Parser (TagTree a) (Maybe a)
 text =
     Project (\case
           TagLeaf (TagText txt) -> Just txt
           _ -> Nothing)
 
-getText :: Parser [Text] (TagTree Text) Text
+getText :: Parser (TagTree Text) Text
 getText = Expect text
 
 example :: TagTree Text
@@ -59,6 +61,9 @@ example =
   TagBranch "html" [("lang", "en")]
     [ TagBranch "head" []
       [ TagBranch "title" [] [ TagLeaf $ TagText "Hello World!" ]
+      , TagBranch "style" [("type", "text/css")]
+          [ TagLeaf $ TagText "css"
+          ]
       ]
     , TagBranch "body" []
       [ TagBranch "h1" [] [ TagLeaf $ TagText "Hi" ]
@@ -77,15 +82,15 @@ example =
     ]
 
 
-chroots :: Selector -> Parser [Text] HTML a -> Parser [Text] HTML [a]
+chroots :: Selector -> Parser HTML a -> Parser HTML [a]
 chroots s = Target (matchSelector s)
 
 
-texts :: Parser [Text] HTML [Text]
+texts :: Parser HTML [Text]
 texts = Target isText getText
 
 
-texts' :: Selector -> Parser [Text] HTML [Text]
+texts' :: Selector -> Parser HTML [Text]
 texts' sel =
   fmap (catMaybes . join) $ Target (matchSelector sel) $ OnChildren text
 
@@ -94,7 +99,7 @@ isText (TagLeaf (TagText _)) = True
 isText _ = False
 
 
-textNoScript :: Parser [Text] HTML [Text]
+textNoScript :: Parser HTML [Text]
 textNoScript =
   asum
     [ at "h1" texts
@@ -104,6 +109,11 @@ textNoScript =
 
 
 main :: IO ()
-main = traverse_ (traverse_ print) $ runParser example $
-  Target isText $ bool <$> text <*> pure Nothing <*> fmap ((== ["script"]) . take 1) GetCrumbs
+main = traverse_ (traverse_ print) $ runParser example
+  $ fmap catMaybes
+  $ Target isText
+  $ bool
+      <$> text
+      <*> pure Nothing
+      <*> fmap ((`elem` ["script", "style"]) . head) GetCrumbs
 
