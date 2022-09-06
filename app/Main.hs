@@ -20,10 +20,10 @@ import           Text.HTML.TagSoup.Tree (tagTree, TagTree(..))
 import GHC.Generics (Generic)
 
 
-laserTitle :: Laser.Parser Laser.HTML Text
+laserTitle :: Laser.Parser bc Laser.HTML Text
 laserTitle = Laser.chroot (Laser.HasTag "title") $ Laser.one $ Laser.texts
 
-laserContent :: Laser.Parser Laser.HTML [Text]
+laserContent :: Laser.Parser bc Laser.HTML [Text]
 laserContent = Laser.chroot (Laser.Both (Laser.HasTag "div") (Laser.WithAttr "class" (== Just "blog-content row"))) $ Laser.texts
 
 
@@ -33,7 +33,7 @@ main = do
   !input_tags <- parseTags <$> T.readFile "bench/data/yes2.html"
   let !input_tree = fromJust $ find (Laser.matchSelector $ Laser.HasTag "html") $ tagTree input_tags
 
-  let runLaser p = flip Laser.runParser p input_tree
+  let runLaser p = flip (Laser.runParser $ const ()) p input_tree
 
   print $ runLaser laserTitle
   print $ runLaser $ sequenceA $ replicate 10000 laserTitle

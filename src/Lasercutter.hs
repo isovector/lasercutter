@@ -12,40 +12,40 @@ import Debug.RecoverRTTI
 import Text.HTML.TagSoup.Tree
 
 
-data Parser t a where
-  Pure       :: a -> Parser t a
-  GetCrumbs  :: Parser t (Crumbs t)
-  LiftA2     :: (b -> c -> a) -> Parser t b -> Parser t c -> Parser t a
-  Target     :: (t -> Bool) -> Parser t a -> Parser t [a]
-  OnChildren :: Parser t a -> Parser t [a]
-  Try        :: Parser t a -> Parser t (Maybe a)
-  Project    :: (t -> a) -> Parser t a
-  Expect     :: Parser t (Maybe a) -> Parser t a
-  Fail       :: Parser t a
+data Parser bc t a where
+  Pure       :: a -> Parser bc t a
+  GetCrumbs  :: Parser bc t bc
+  LiftA2     :: (b -> c -> a) -> Parser bc t b -> Parser bc t c -> Parser bc t a
+  Target     :: (t -> Bool) -> Parser bc t a -> Parser bc t [a]
+  OnChildren :: Parser bc t a -> Parser bc t [a]
+  Try        :: Parser bc t a -> Parser bc t (Maybe a)
+  Project    :: (t -> a) -> Parser bc t a
+  Expect     :: Parser bc t (Maybe a) -> Parser bc t a
+  Fail       :: Parser bc t a
 
-instance Show (Parser t a) where
+instance Show (Parser bc t a) where
   show = anythingToString
 
-instance Functor (Parser t) where
+instance Functor (Parser bc t) where
   fmap = liftA
 
-instance Applicative (Parser t) where
+instance Applicative (Parser bc t) where
   pure = Pure
   liftA2 _ Fail _ = Fail
   liftA2 _ _ Fail = Fail
   liftA2 f a b    = LiftA2 f a b
 
-instance Alternative (Parser t) where
+instance Alternative (Parser bc t) where
   empty = Fail
   pa1 <|> pa2 = expect $ maybe <$> try pa2 <*> pure Just <*> try pa1
 
 
 
-data Bind t a where
-  Bind :: Parser t a -> ([a] -> Parser t b) -> Bind t b
+data Bind bc t a where
+  Bind :: Parser bc t a -> ([a] -> Parser bc t b) -> Bind bc t b
 
 
-split :: Crumbs t -> Parser t a -> t -> Bind t a
+split :: bc -> Parser bc t a -> t -> Bind bc t a
 split _ (Pure a) _         = Bind (pure ()) $ const $ pure a
 split cr GetCrumbs _        = Bind (pure ()) $ const $ pure cr
 split cr (LiftA2 f l r) tt  =
@@ -64,35 +64,35 @@ split cr (Try pa) tt         = split cr (try pa) tt
 split _ (Project f) tt      = Bind (pure ()) $ const $ pure $ f tt
 split _ Fail _              = Bind Fail $ const $ Fail
 
-expect :: Parser t (Maybe a) -> Parser t a
+expect :: Parser bc t (Maybe a) -> Parser bc t a
 expect (Try p) = p
 expect Fail    = Fail
 expect p       = Expect p
 
-try :: Parser t a -> Parser t (Maybe a)
+try :: Parser bc t a -> Parser bc t (Maybe a)
 try Fail       = pure Nothing
 try (Expect p) = p
 try p          = fmap Just p
 
-bind :: (Parser t a -> Parser t b) -> Bind t a -> Bind t b
+bind :: (Parser bc t a -> Parser bc t b) -> Bind bc t a -> Bind bc t b
 bind f (Bind p k) = Bind p $ f . k
 
 
-parseNode :: IsTree t => Crumbs t -> Parser t a -> t -> Parser t a
-parseNode cr p tt =
+parseNode :: (Semigroup bc, IsTree t) => (t -> bc) -> bc -> Parser bc t a -> t -> Parser bc t a
+parseNode summarize cr p tt =
   case split cr' p tt of
     Bind (Pure a) k -> k [a]
-    Bind pa k -> parseChildren cr' pa (getChildren tt) k
+    Bind pa k -> parseChildren summarize cr' pa (getChildren tt) k
   where
     cr' = summarize tt <> cr
 
 
 
-parseChildren :: IsTree t => Crumbs t -> Parser t a -> [t] -> ([a] -> Parser t b) -> Parser t b
-parseChildren cr pa tts k = k $ mapMaybe (getResult . parseNode cr pa) tts
+parseChildren :: (IsTree t, Semigroup bc) => (t -> bc) -> bc -> Parser bc t a -> [t] -> ([a] -> Parser bc t b) -> Parser bc t b
+parseChildren summarize cr pa tts k = k $ mapMaybe (getResult . parseNode summarize cr pa) tts
 
 
-getResult :: Parser t a -> Maybe a
+getResult :: Parser bc t a -> Maybe a
 getResult (Pure a) =  pure a
 getResult GetCrumbs =  Nothing
 getResult (LiftA2 f a b) =  liftA2 f (getResult a) (getResult b)
@@ -108,26 +108,24 @@ getResult (Project _) = Nothing
 getResult (Try p) = Just $ getResult p
 getResult Fail = Nothing
 
-class Monoid (Crumbs t) => IsTree t where
-  type Crumbs t
+class IsTree t where
   getChildren :: t -> [t]
-  summarize :: t -> Crumbs t
 
 
-onSingleChild :: Parser t a -> Parser t (Maybe a)
+onSingleChild :: Parser bc t a -> Parser bc t (Maybe a)
 onSingleChild = fmap listToMaybe . OnChildren
 
 
-runParser :: IsTree t => t -> Parser t a -> Maybe a
-runParser tt = getResult . flip (parseNode mempty) tt
+runParser :: (Monoid bc, IsTree t) => (t -> bc) -> t -> Parser bc t a -> Maybe a
+runParser summarize tt = getResult . flip (parseNode summarize mempty) tt
 
-asIs :: Parser t t
+asIs :: Parser bc t t
 asIs = Project id
 
 yo :: TagTree Text
 yo = TagBranch "yo" [] []
 
 
-failOnFalse :: a -> Parser t Bool -> Parser t a
+failOnFalse :: a -> Parser bc t Bool -> Parser bc t a
 failOnFalse a p = Expect $ bool <$> pure Nothing <*> pure (Just a) <*> p
 

@@ -30,6 +30,7 @@ dependencies:
 - criterion
 - scalpel
 - deepseq
+- containers
 
 default-extensions:
 - BangPatterns

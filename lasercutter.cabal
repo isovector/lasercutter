@@ -93,6 +93,7 @@ library
       QuickCheck
     , base >=4.7 && <5
     , checkers
+    , containers
     , criterion
     , deepseq
     , hspec
@@ -170,6 +171,7 @@ executable profile-me
       QuickCheck
     , base >=4.7 && <5
     , checkers
+    , containers
     , criterion
     , deepseq
     , hspec
@@ -251,6 +253,7 @@ test-suite lasercutter-test
       QuickCheck
     , base >=4.7 && <5
     , checkers
+    , containers
     , criterion
     , deepseq
     , hspec
@@ -265,6 +268,7 @@ benchmark lasercutter-bench
   type: exitcode-stdio-1.0
   main-is: Main.hs
   other-modules:
+      ScalpelSkipScript
       Paths_lasercutter
   hs-source-dirs:
       bench
@@ -330,6 +334,7 @@ benchmark lasercutter-bench
       QuickCheck
     , base >=4.7 && <5
     , checkers
+    , containers
     , criterion
     , deepseq
     , hspec
