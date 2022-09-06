@@ -1,25 +1,13 @@
 
 module Lasercutter where
 
-import Debug.RecoverRTTI
 import Control.Applicative
-import Data.Bool (bool)
-import Data.Maybe (isJust, mapMaybe, listToMaybe, catMaybes, fromMaybe)
-import Data.Text (Text)
-import Text.HTML.TagSoup (Tag(TagText))
-import Text.HTML.TagSoup.Tree
-import Data.Either (partitionEithers)
 import Control.Monad (join)
-import Data.Foldable (asum)
-
-
-data Selector
-  = Both Selector Selector
-  | AltS Selector Selector
-  | Negate Selector
-  | HasTag Text
-  | HasAttr Text
-  deriving (Eq, Ord, Show, Read)
+import Data.Bool (bool)
+import Data.Maybe (mapMaybe, listToMaybe, catMaybes)
+import Data.Text (Text)
+import Debug.RecoverRTTI
+import Text.HTML.TagSoup.Tree
 
 
 data Parser t a where
@@ -49,15 +37,6 @@ instance Alternative (Parser t) where
   empty = Expect $ pure Nothing
   pa1 <|> pa2 = expect $ maybe <$> try pa2 <*> pure Just <*> try pa1
 
-
-matchSelector :: Selector -> TagTree Text -> Bool
-matchSelector (Both se1 se2) tt                  = matchSelector se1 tt && matchSelector se2 tt
-matchSelector (AltS se1 se2)  tt                  = matchSelector se1 tt || matchSelector se2 tt
-matchSelector (Negate se)    tt                  = not $ matchSelector se tt
-matchSelector (HasTag txt)  (TagBranch txt' _ _) = txt == txt'
-matchSelector (HasTag _)    (TagLeaf _)          = False
-matchSelector (HasAttr txt) (TagBranch _ x0 _)   = isJust $ lookup txt x0
-matchSelector (HasAttr _)   (TagLeaf _)          = False
 
 
 data Bind t a where
@@ -152,40 +131,9 @@ getResult Fail = Nothing
 class IsTree t where
   getChildren :: t -> [t]
 
-instance IsTree (TagTree t) where
-  getChildren (TagBranch _ _ tts) = tts
-  getChildren (TagLeaf _) = []
 
 
 
-example :: TagTree Text
-example =
-  TagBranch "html" [("lang", "en")]
-    [ TagBranch "head" []
-      [ TagBranch "title" [] [ TagLeaf $ TagText "Hello World!" ]
-      ]
-    , TagBranch "body" []
-      [ TagBranch "h1" [] [ TagLeaf $ TagText "Hi" ]
-      , TagBranch "p" [("id", "lorem")] [ TagLeaf $ TagText "lorem ipsum" ]
-      ]
-    ]
-
-
-
-at :: Text -> Parser (TagTree Text) a -> Parser (TagTree Text) [a]
-at t p
-  = Expect
-  $ bool
-      <$> pure Nothing
-      <*> fmap Just (OnChildren p)
-      <*> Project (matchSelector $ HasTag t)
-
-getText :: Parser (TagTree Text) Text
-getText =
-  Expect $
-    Project (\case
-          TagLeaf (TagText txt) -> Just txt
-          _ -> Nothing)
 
 runParser :: IsTree t => t -> Parser t a -> Maybe a
 runParser tt = getResult . flip parseHTML tt
@@ -199,20 +147,4 @@ yo = TagBranch "yo" [] []
 
 failOnFalse :: a -> Parser t Bool -> Parser t a
 failOnFalse a p = Expect $ bool <$> pure Nothing <*> pure (Just a) <*> p
-
-
-main :: IO ()
-main = print $ runParser example $
-  asum
-    [ at "bad" asIs
-    , at "bad3" asIs
-    , at "html" asIs
-    , at "bad2" asIs
-    ]
-
---     failOnFalse "good" (Project (matchSelector $ HasTag "html")) <|>
---     failOnFalse @String "bad" (Project (matchSelector $ HasTag "bad")) <|> Fail
--- --     -- at "bad" asIs
-
-  -- getText <|> pure ""
 
