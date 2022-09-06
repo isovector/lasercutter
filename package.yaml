@@ -27,6 +27,9 @@ dependencies:
 - hspec
 - checkers
 - recover-rtti
+- criterion
+- scalpel
+- deepseq
 
 default-extensions:
 - BangPatterns
@@ -98,6 +101,28 @@ ghc-options:
 library:
   source-dirs: src
 
+executables:
+  profile-me:
+    main:                Main.hs
+    source-dirs:         app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    - -O2
+    dependencies:
+    - lasercutter
+
+benchmarks:
+  lasercutter-bench:
+    main:                Main.hs
+    source-dirs:         bench
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - lasercutter
 tests:
   lasercutter-test:
     main:                Spec.hs

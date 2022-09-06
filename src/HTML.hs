@@ -1,12 +1,13 @@
+{-# LANGUAGE StrictData      #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
 
 module HTML where
 
 import Lasercutter
 import Data.Bool (bool)
-import Data.Maybe (isJust, catMaybes)
+import Data.Maybe (isJust, catMaybes, listToMaybe)
 import Data.Text (Text)
-import Text.HTML.TagSoup (Tag(TagText))
+import Text.HTML.TagSoup (Tag(TagText, TagOpen))
 import Text.HTML.TagSoup.Tree
 import Data.Foldable (asum, traverse_)
 import Control.Monad (join)
@@ -18,17 +19,18 @@ data Selector
   | Alt Selector Selector
   | Negate Selector
   | HasTag Text
-  | HasAttr Text
-  deriving (Eq, Ord, Show, Read)
+  | WithAttr Text (Maybe Text -> Bool)
 
 matchSelector :: Selector -> TagTree Text -> Bool
-matchSelector (Both se1 se2) tt                  = matchSelector se1 tt && matchSelector se2 tt
-matchSelector (Alt se1 se2)  tt                  = matchSelector se1 tt || matchSelector se2 tt
-matchSelector (Negate se)    tt                  = not $ matchSelector se tt
-matchSelector (HasTag txt)  (TagBranch txt' _ _) = txt == txt'
-matchSelector (HasTag _)    (TagLeaf _)          = False
-matchSelector (HasAttr txt) (TagBranch _ x0 _)   = isJust $ lookup txt x0
-matchSelector (HasAttr _)   (TagLeaf _)          = False
+matchSelector (Both se1 se2) tt                             = matchSelector se1 tt && matchSelector se2 tt
+matchSelector (Alt se1 se2)  tt                             = matchSelector se1 tt || matchSelector se2 tt
+matchSelector (Negate se)    tt                             = not $ matchSelector se tt
+matchSelector (HasTag txt)  (TagBranch txt' _ _)            = txt == txt'
+matchSelector (HasTag txt)  (TagLeaf (TagOpen txt' _))      = txt == txt'
+matchSelector (HasTag _)    (TagLeaf _)                     = False
+matchSelector (WithAttr txt f) (TagBranch _ x0 _)           = f $ lookup txt x0
+matchSelector (WithAttr txt f)  (TagLeaf (TagOpen _ attrs)) = f $ lookup txt attrs
+matchSelector (WithAttr _ _)   (TagLeaf _)                  = False
 
 instance IsTree (TagTree t) where
   type Crumbs (TagTree t) = [t]
@@ -81,9 +83,15 @@ example =
       ]
     ]
 
+chroot :: Selector -> Parser HTML a -> Parser HTML a
+chroot s = one . chroots s
 
 chroots :: Selector -> Parser HTML a -> Parser HTML [a]
-chroots s = Target (matchSelector s)
+chroots = Target . matchSelector
+
+
+one :: Parser HTML [a] -> Parser HTML a
+one = Expect . fmap listToMaybe
 
 
 texts :: Parser HTML [Text]

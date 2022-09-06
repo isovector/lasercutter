@@ -1,4 +1,5 @@
 {-# LANGUAGE FunctionalDependencies #-}
+{-# LANGUAGE StrictData             #-}
 
 module Lasercutter where
 
