@@ -6,58 +6,98 @@ import Data.Maybe (mapMaybe)
 import Lasercutter.Types
 
 
+------------------------------------------------------------------------------
+-- | Split a parser into a parser to run on the node's children, and how to
+-- reassemble those pieces into a parser for the current node.
 split :: bc -> Parser bc t a -> t -> Split bc t a
-split _ (Pure a) _         = Split (pure ()) $ const $ pure a
-split cr GetCrumbs _        = Split (pure ()) $ const $ pure cr
-split cr (LiftA2 f l r) tt  =
+split _ (Pure a) _         = ignoreChildren $ pure a
+split cr GetCrumbs _       = ignoreChildren $ pure cr
+split cr (LiftA2 f l r) tt =
   case (split cr l tt, split cr r tt) of
     (Split l' kl, Split r' kr) ->
       Split (LiftA2 (,) l' r') $ \(unzip -> (lcs, rcs)) ->
         LiftA2 f (kl lcs) (kr rcs)
 split cr p0@(Target se pa) tt
   | se tt
-  = bind (fmap pure) $ split cr pa tt
+  = continue (fmap pure) $ split cr pa tt
   | otherwise
   = Split p0 $ pure . join
-split cr (Expect pa) tt  = bind expect $ split cr pa tt
-split _ (OnChildren pa') _  = Split pa' pure
-split _ (Project f) tt      = Split (pure ()) $ const $ pure $ f tt
-split _ Fail _              = Split Fail $ const $ Fail
+split cr (Expect pa) tt    = continue expect $ split cr pa tt
+split _ (OnChildren pa') _ = Split pa' pure
+split _ (Project f) tt     = ignoreChildren $ pure $ f tt
+split _ Fail _             = Split Fail $ const $ Fail
 
 
-bind :: (Parser bc t a -> Parser bc t b) -> Split bc t a -> Split bc t b
-bind f (Split p k) = Split p $ f . k
+------------------------------------------------------------------------------
+-- | There is no work to do for the children, so ignore them.
+ignoreChildren :: Parser bc t b -> Split bc t b
+ignoreChildren = Split (pure ()) . const
 
 
-parseNode :: (Semigroup bc, IsTree t) => (t -> bc) -> bc -> Parser bc t a -> t -> Parser bc t a
+------------------------------------------------------------------------------
+-- | Append a continuation after a 'Split'.
+continue :: (Parser bc t a -> Parser bc t b) -> Split bc t a -> Split bc t b
+continue f (Split p k) = Split p $ f . k
+
+
+------------------------------------------------------------------------------
+-- | Parse the current node by splitting the parser, accumulating the results
+-- of each child, and then running the continuation.
+parseNode
+    :: (Semigroup bc, IsTree t)
+    => (t -> bc)
+    -> bc
+    -> Parser bc t a
+    -> t
+    -> Parser bc t a
 parseNode summarize cr p tt =
   case split cr' p tt of
     Split (Pure a) k -> k [a]
-    Split pa k -> parseChildren summarize cr' pa (getChildren tt) k
+    Split pa k -> k $ parseChildren summarize cr' pa $ getChildren tt
   where
     cr' = summarize tt <> cr
 
 
-parseChildren :: (IsTree t, Semigroup bc) => (t -> bc) -> bc -> Parser bc t a -> [t] -> ([a] -> Parser bc t b) -> Parser bc t b
-parseChildren summarize cr pa tts k = k $ mapMaybe (getResult . parseNode summarize cr pa) tts
+------------------------------------------------------------------------------
+-- | Run a parser on each child, accumulating the results.
+parseChildren
+    :: (IsTree t, Semigroup bc)
+    => (t -> bc)
+    -> bc
+    -> Parser bc t a
+    -> [t]
+    -> [a]
+parseChildren summarize cr pa =
+  mapMaybe $ getResult . parseNode summarize cr pa
 
 
+------------------------------------------------------------------------------
+-- | Extract a value from a parser. The way the applicative evaluates,
+-- all "combinator" effects are guaranteed to have been run by the time this
+-- function gets called.
 getResult :: Parser bc t a -> Maybe a
-getResult (Pure a) =  pure a
-getResult GetCrumbs =  Nothing
-getResult (LiftA2 f a b) =  liftA2 f (getResult a) (getResult b)
-getResult (Target _ p) = case getResult p of
-  Nothing -> Nothing
-  Just a -> Just [a]
-getResult (Expect pa) = join $ getResult pa
-getResult (OnChildren p) =
-  case getResult p of
-    Just a -> pure [a]
-    _ -> Nothing
-getResult (Project _) = Nothing
-getResult Fail = Nothing
+getResult (Pure a)       = pure a
+getResult (LiftA2 f a b) = liftA2 f (getResult a) (getResult b)
+getResult (Expect pa)    = join $ getResult pa
+getResult Fail           = Nothing
+getResult GetCrumbs      = error "getResult: impossible"
+getResult (Target _ _)   = error "getResult: impossible"
+getResult (OnChildren _) = error "getResult: impossible"
+getResult (Project _)    = error "getResult: impossible"
 
 
-runParser :: (Monoid bc, IsTree t) => (t -> bc) -> t -> Parser bc t a -> Maybe a
-runParser summarize tt = getResult . flip (parseNode summarize mempty) tt
+------------------------------------------------------------------------------
+-- | Run a parser over a tree in a single pass.
+runParser
+    :: (Monoid bc, IsTree t)
+    => (t -> bc)
+       -- ^ A means of summarizing the current node for tracking breadcrumbs.
+       -- If you don't need breadcrumbs, use @'const' ()@.
+    -> t
+       -- ^ The tree to parse.
+    -> Parser bc t a
+       -- ^ How to parse the tree.
+    -> Maybe a
+runParser summarize tt =
+  getResult . flip (parseNode summarize mempty) tt
 
