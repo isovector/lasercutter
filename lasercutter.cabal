@@ -34,59 +34,23 @@ library
       src
   default-extensions:
       BangPatterns
-      BinaryLiterals
-      ConstrainedClassMethods
-      ConstraintKinds
-      DataKinds
       DeriveAnyClass
-      DeriveDataTypeable
-      DeriveFoldable
-      DeriveFunctor
       DeriveGeneric
-      DeriveLift
-      DeriveTraversable
       DerivingStrategies
       DerivingVia
-      DoAndIfThenElse
-      DuplicateRecordFields
-      EmptyCase
-      EmptyDataDecls
-      EmptyDataDeriving
-      ExistentialQuantification
-      ExplicitForAll
       FlexibleContexts
       FlexibleInstances
-      ForeignFunctionInterface
-      GADTSyntax
       GADTs
-      GeneralizedNewtypeDeriving
-      HexFloatLiterals
       ImplicitPrelude
-      ImportQualifiedPost
-      InstanceSigs
-      KindSignatures
       LambdaCase
       MonomorphismRestriction
-      MultiParamTypeClasses
-      NamedFieldPuns
-      NamedWildCards
-      NumericUnderscores
       OverloadedStrings
-      PatternGuards
-      PolyKinds
-      PostfixOperators
-      RankNTypes
-      RelaxedPolyRec
       ScopedTypeVariables
       StandaloneDeriving
-      StandaloneKindSignatures
-      StarIsType
       StrictData
-      TraditionalRecordSyntax
       TupleSections
       TypeApplications
       TypeFamilies
-      TypeOperators
       TypeSynonymInstances
       ViewPatterns
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints
@@ -106,59 +70,23 @@ test-suite lasercutter-test
       test
   default-extensions:
       BangPatterns
-      BinaryLiterals
-      ConstrainedClassMethods
-      ConstraintKinds
-      DataKinds
       DeriveAnyClass
-      DeriveDataTypeable
-      DeriveFoldable
-      DeriveFunctor
       DeriveGeneric
-      DeriveLift
-      DeriveTraversable
       DerivingStrategies
       DerivingVia
-      DoAndIfThenElse
-      DuplicateRecordFields
-      EmptyCase
-      EmptyDataDecls
-      EmptyDataDeriving
-      ExistentialQuantification
-      ExplicitForAll
       FlexibleContexts
       FlexibleInstances
-      ForeignFunctionInterface
-      GADTSyntax
       GADTs
-      GeneralizedNewtypeDeriving
-      HexFloatLiterals
       ImplicitPrelude
-      ImportQualifiedPost
-      InstanceSigs
-      KindSignatures
       LambdaCase
       MonomorphismRestriction
-      MultiParamTypeClasses
-      NamedFieldPuns
-      NamedWildCards
-      NumericUnderscores
       OverloadedStrings
-      PatternGuards
-      PolyKinds
-      PostfixOperators
-      RankNTypes
-      RelaxedPolyRec
       ScopedTypeVariables
       StandaloneDeriving
-      StandaloneKindSignatures
-      StarIsType
       StrictData
-      TraditionalRecordSyntax
       TupleSections
       TypeApplications
       TypeFamilies
-      TypeOperators
       TypeSynonymInstances
       ViewPatterns
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
@@ -185,59 +113,23 @@ benchmark lasercutter-bench
       bench
   default-extensions:
       BangPatterns
-      BinaryLiterals
-      ConstrainedClassMethods
-      ConstraintKinds
-      DataKinds
       DeriveAnyClass
-      DeriveDataTypeable
-      DeriveFoldable
-      DeriveFunctor
       DeriveGeneric
-      DeriveLift
-      DeriveTraversable
       DerivingStrategies
       DerivingVia
-      DoAndIfThenElse
-      DuplicateRecordFields
-      EmptyCase
-      EmptyDataDecls
-      EmptyDataDeriving
-      ExistentialQuantification
-      ExplicitForAll
       FlexibleContexts
       FlexibleInstances
-      ForeignFunctionInterface
-      GADTSyntax
       GADTs
-      GeneralizedNewtypeDeriving
-      HexFloatLiterals
       ImplicitPrelude
-      ImportQualifiedPost
-      InstanceSigs
-      KindSignatures
       LambdaCase
       MonomorphismRestriction
-      MultiParamTypeClasses
-      NamedFieldPuns
-      NamedWildCards
-      NumericUnderscores
       OverloadedStrings
-      PatternGuards
-      PolyKinds
-      PostfixOperators
-      RankNTypes
-      RelaxedPolyRec
       ScopedTypeVariables
       StandaloneDeriving
-      StandaloneKindSignatures
-      StarIsType
       StrictData
-      TraditionalRecordSyntax
       TupleSections
       TypeApplications
       TypeFamilies
-      TypeOperators
       TypeSynonymInstances
       ViewPatterns
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N -O2
