@@ -103,7 +103,7 @@ instance (CoArbitrary t, Arbitrary a, Arbitrary (Parser bc t a), CoArbitrary bc,
                   <$> arbitrary @(a -> a -> Maybe a)
                   <*> scale (flip div 2) arbitrary
                   <*> scale (flip div 2) arbitrary
-              , tryP <$> scale (subtract 1) arbitrary
+              , try <$> scale (subtract 1) arbitrary
               , expect <$> scale (subtract 1) arbitrary
               ] <> terminal
 
@@ -171,8 +171,8 @@ main = do
     , property $ \(f :: Int8 -> Four -> Bool) a b ->
         expect (liftA2 (liftA2 f) a b) =-= liftA2 @Test f (expect a) (expect b)
 
-      -- optional equivalent to tryP
-    , property $ optional @(Test) @Int8 =-= tryP
+      -- optional equivalent to try
+    , property $ optional @(Test) @Int8 =-= try
     ]
 
   quickBatch $ functor     $ undefined @_ @(Test (Int8, Int8, Int8))
