@@ -8,7 +8,6 @@ import Data.Foldable (traverse_)
 import Data.Int (Int8)
 import Data.Monoid (Any)
 import Data.Set (Set)
-import Debug.RecoverRTTI (anythingToString)
 import GHC.Generics (Generic)
 import Lasercutter
 import Lasercutter.Types
@@ -18,9 +17,6 @@ import Test.QuickCheck.Classes
 
 
 type Test = Parser (Set Four) DebugTree
-
-instance Show (Parser bc t a) where
-  show = anythingToString
 
 
 main :: IO ()
