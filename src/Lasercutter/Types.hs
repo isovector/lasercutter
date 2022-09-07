@@ -6,9 +6,14 @@ import Control.Applicative
 import Debug.RecoverRTTI (anythingToString)
 import Witherable
 import Data.Monoid
+import Control.Selective
 
 
+------------------------------------------------------------------------------
+-- | Lasercutter supports any inductive tree types, as witnessed by
+-- 'getChildren'.
 class IsTree t where
+  -- | Get all children of the current node.
   getChildren :: t -> [t]
 
 
@@ -50,19 +55,21 @@ instance Functor (Parser bc t) where
 
 instance Applicative (Parser bc t) where
   pure = Pure
+  liftA2 f (Pure a) (Pure b) = Pure $ f a b
   liftA2 _ Fail _ = Fail
   liftA2 _ _ Fail = Fail
   liftA2 f a b    = LiftA2 f a b
-
-
-instance Filterable (Parser bc t) where
-  catMaybes = Expect
-
 
 instance Alternative (Parser bc t) where
   empty = Fail
   pa1 <|> pa2 =
     expect $ maybe <$> try pa2 <*> pure Just <*> try pa1
+
+instance Selective (Parser bc t) where
+  select = selectA
+
+instance Filterable (Parser bc t) where
+  catMaybes = Expect
 
 
 ------------------------------------------------------------------------------

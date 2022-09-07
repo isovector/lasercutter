@@ -43,7 +43,7 @@ at t p
   $ bool
       <$> pure Nothing
       <*> fmap Just p
-      <*> onSelf (matchSelector $ HasTag t)
+      <*> proj (matchSelector $ HasTag t)
 
 textOf :: TagTree a -> Maybe a
 textOf = \case
@@ -51,7 +51,7 @@ textOf = \case
   _ -> Nothing
 
 text :: Parser bc (TagTree a) (Maybe a)
-text = onSelf textOf
+text = proj textOf
 
 getText :: Parser bc (TagTree Text) Text
 getText = expect text

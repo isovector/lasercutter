@@ -2,6 +2,8 @@
 
 module Main where
 
+import Control.Selective
+import Data.Bifunctor (bimap)
 import Data.Foldable (traverse_)
 import Data.Int (Int8)
 import Data.Monoid (Any)
@@ -39,6 +41,7 @@ main = do
 
   quickBatch $ functor     $ undefined @_ @(Test (Int8, Int8, Int8))
   quickBatch $ applicative $ undefined @_ @(Test (Int8, Int8, Int8))
+  quickBatch $ selective   $ undefined @_ @(Test (Int8, Int8, Int8))
   quickBatch $ alternative $ undefined @_ @(Test Int8)
   quickBatch $ semigroup   $ undefined @_ @(Test Any, Int8)
   quickBatch $ monoid      $ undefined @_ @(Test Any)
@@ -65,15 +68,15 @@ instance {-# OVERLAPPABLE #-}
           case n <= 1 of
             True -> oneof terminal
             False -> oneof $
-              [ LiftA2
+              [ liftA2
                   <$> (arbitrary @(bc -> Int8 -> a))
                   <*> scale (flip div 2) arbitrary
                   <*> scale (flip div 2) arbitrary
-              , LiftA2
+              , liftA2
                   <$> (arbitrary @(Bool -> Bool -> a))
                   <*> scale (flip div 2) arbitrary
                   <*> scale (flip div 2) arbitrary
-              , LiftA2
+              , liftA2
                   <$> (arbitrary @(a -> a -> a))
                   <*> scale (flip div 2) arbitrary
                   <*> scale (flip div 2) arbitrary
@@ -109,15 +112,15 @@ instance
           case n <= 1 of
             True -> oneof terminal
             False -> oneof $
-              [ LiftA2
+              [ liftA2
                   <$> arbitrary @(bc -> Int8 -> [a])
                   <*> scale (flip div 2) arbitrary
                   <*> scale (flip div 2) arbitrary
-              , LiftA2
+              , liftA2
                   <$> arbitrary @(Bool -> Bool -> [a])
                   <*> scale (flip div 2) arbitrary
                   <*> scale (flip div 2) arbitrary
-              , LiftA2
+              , liftA2
                   <$> arbitrary @(a -> a -> [a])
                   <*> scale (flip div 2) arbitrary
                   <*> scale (flip div 2) arbitrary
@@ -155,15 +158,15 @@ instance
           case n <= 1 of
             True -> oneof terminal
             False -> oneof $
-              [ LiftA2
+              [ liftA2
                   <$> arbitrary @(bc -> Int8 -> Maybe a)
                   <*> scale (flip div 2) arbitrary
                   <*> scale (flip div 2) arbitrary
-              , LiftA2
+              , liftA2
                   <$> arbitrary @(Bool -> Bool -> Maybe a)
                   <*> scale (flip div 2) arbitrary
                   <*> scale (flip div 2) arbitrary
-              , LiftA2
+              , liftA2
                   <$> arbitrary @(a -> a -> Maybe a)
                   <*> scale (flip div 2) arbitrary
                   <*> scale (flip div 2) arbitrary
@@ -230,4 +233,36 @@ instance (EqProp a) => EqProp (Parser (Set Four) DebugTree a) where
 
 instance EqProp Int8 where
   (=-=) = (===)
+
+
+------------------------------------------------------------------------------
+
+selective :: forall m a b c.
+               ( Selective m
+               , Arbitrary a, Arbitrary b
+               , Arbitrary (m (Either a a)), Show (m (Either a a))
+               , Arbitrary (m (Either a b)), Show (m (Either a b))
+               , Arbitrary (m (Either c (a -> b))), Show (m (Either c (a -> b)))
+               , Arbitrary (m (a -> b)), Show (m (a -> b))
+               , Arbitrary (m (c -> a -> b)), Show (m (c -> a -> b))
+               , Show a, Show b
+               , EqProp (m a), EqProp (m b)
+               ) =>
+               m (a,b,c) -> TestBatch
+selective = const ( "selective"
+                  , [ ("identity"    , property identityP)
+                    , ("distributivity" , property distributivityP)
+                    , ("associativity", property associativityP)
+                    ]
+                  )
+ where
+   identityP     :: m (Either a a) -> Property
+   distributivityP  :: Either a b -> m (a -> b) -> m (a -> b) -> Property
+   associativityP :: m (Either a b) -> m (Either c (a -> b)) -> m (c -> a -> b) -> Property
+
+   identityP x = (x <*? pure id) =-= fmap (either id id) x
+   distributivityP x y z = (pure x <*? (y *> z)) =-= ((pure x <*? y) *> (pure x <*? z))
+   associativityP x y z = (x <*? (y <*? z)) =-= ((fmap Right <$> x) <*? (g <$> y) <*? (uncurry <$> z))
+    where
+     g y' a = bimap (,a) ($a) y'
 

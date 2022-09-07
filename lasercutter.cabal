@@ -101,6 +101,7 @@ library
     , hspec
     , recover-rtti
     , scalpel
+    , selective
     , tagsoup
     , text
     , witherable
@@ -181,6 +182,7 @@ executable profile-me
     , lasercutter
     , recover-rtti
     , scalpel
+    , selective
     , tagsoup
     , text
     , witherable
@@ -264,6 +266,7 @@ test-suite lasercutter-test
     , lasercutter
     , recover-rtti
     , scalpel
+    , selective
     , tagsoup
     , text
     , witherable
@@ -346,6 +349,7 @@ benchmark lasercutter-bench
     , lasercutter
     , recover-rtti
     , scalpel
+    , selective
     , tagsoup
     , text
     , witherable
