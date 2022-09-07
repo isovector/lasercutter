@@ -5,6 +5,7 @@ module Lasercutter.Types where
 import Control.Applicative
 import Debug.RecoverRTTI (anythingToString)
 import Witherable
+import Data.Monoid
 
 
 class IsTree t where
@@ -21,6 +22,8 @@ data Parser bc t a where
   Project    :: (t -> a) -> Parser bc t a
   Expect     :: Parser bc t (Maybe a) -> Parser bc t a
   Fail       :: Parser bc t a
+  deriving (Semigroup, Monoid) via (Ap (Parser bc t) a)
+
 
 instance Show (Parser bc t a) where
   show = anythingToString
