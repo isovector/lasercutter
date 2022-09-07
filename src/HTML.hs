@@ -3,16 +3,14 @@
 
 module HTML where
 
-import           Control.Monad (join)
-import           Data.Bool (bool)
-import           Data.Foldable (asum, traverse_)
-import           Data.Maybe (isJust, catMaybes, listToMaybe)
-import           Data.Set (Set)
-import qualified Data.Set as S
-import           Data.Text (Text)
-import           Lasercutter
-import           Text.HTML.TagSoup (Tag(TagText, TagOpen))
-import           Text.HTML.TagSoup.Tree
+import Control.Monad (join)
+import Data.Bool (bool)
+import Data.Foldable (traverse_)
+import Data.Set (Set)
+import Data.Text (Text)
+import Lasercutter
+import Text.HTML.TagSoup (Tag(TagText, TagOpen))
+import Text.HTML.TagSoup.Tree
 
 
 type HTML = TagTree Text
@@ -41,20 +39,22 @@ instance IsTree (TagTree t) where
 
 at :: Text -> Parser bc (TagTree Text) a -> Parser bc (TagTree Text) a
 at t p
-  = Expect
+  = expect
   $ bool
       <$> pure Nothing
       <*> fmap Just p
-      <*> Project (matchSelector $ HasTag t)
+      <*> onSelf (matchSelector $ HasTag t)
+
+textOf :: TagTree a -> Maybe a
+textOf = \case
+  TagLeaf (TagText txt) -> Just txt
+  _ -> Nothing
 
 text :: Parser bc (TagTree a) (Maybe a)
-text =
-    Project (\case
-          TagLeaf (TagText txt) -> Just txt
-          _ -> Nothing)
+text = onSelf textOf
 
 getText :: Parser bc (TagTree Text) Text
-getText = Expect text
+getText = expect text
 
 example :: TagTree Text
 example =
@@ -84,21 +84,18 @@ example =
 chroot :: Selector -> Parser bc HTML a -> Parser bc HTML a
 chroot s = one . chroots s
 
+
 chroots :: Selector -> Parser bc HTML a -> Parser bc HTML [a]
-chroots = Target . matchSelector
-
-
-one :: Parser bc HTML [a] -> Parser bc HTML a
-one = Expect . fmap listToMaybe
+chroots = target . matchSelector
 
 
 texts :: Parser bc HTML [Text]
-texts = Target isText getText
+texts = targetMap textOf
 
 
 texts' :: Selector -> Parser bc HTML [Text]
 texts' sel =
-  fmap (catMaybes . join) $ Target (matchSelector sel) $ OnChildren text
+  fmap (catMaybes . join) $ target (matchSelector sel) $ onChildren text
 
 isText :: HTML -> Bool
 isText (TagLeaf (TagText _)) = True
@@ -123,9 +120,9 @@ getTag _ = mempty
 main :: IO ()
 main = traverse_ (traverse_ print) $ runParser getTag example
   $ fmap catMaybes
-  $ Target isText
+  $ target isText
   $ bool
       <$> text
       <*> pure Nothing
-      <*> fmap ((`elem` ["script", "style"]) . head) GetCrumbs
+      <*> fmap ((`elem` ["script", "style"]) . head) breadcrumbs
 
