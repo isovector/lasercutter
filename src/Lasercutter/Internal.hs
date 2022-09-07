@@ -21,7 +21,6 @@ split cr p0@(Target se pa) tt
   = Bind p0 $ pure . join
 split cr (Expect pa) tt  = bind expect $ split cr pa tt
 split _ (OnChildren pa') _  = Bind pa' pure
-split cr (Try pa) tt         = split cr (tryP pa) tt
 split _ (Project f) tt      = Bind (pure ()) $ const $ pure $ f tt
 split _ Fail _              = Bind Fail $ const $ Fail
 
@@ -56,7 +55,6 @@ getResult (OnChildren p) =
     Just a -> pure [a]
     _ -> Nothing
 getResult (Project _) = Nothing
-getResult (Try p) = Just $ getResult p
 getResult Fail = Nothing
 
 

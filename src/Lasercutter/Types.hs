@@ -18,7 +18,6 @@ data Parser bc t a where
   LiftA2     :: (b -> c -> a) -> Parser bc t b -> Parser bc t c -> Parser bc t a
   Target     :: (t -> Bool) -> Parser bc t a -> Parser bc t [a]
   OnChildren :: Parser bc t a -> Parser bc t [a]
-  Try        :: Parser bc t a -> Parser bc t (Maybe a)
   Project    :: (t -> a) -> Parser bc t a
   Expect     :: Parser bc t (Maybe a) -> Parser bc t a
   Fail       :: Parser bc t a
@@ -51,14 +50,15 @@ data Bind bc t a where
 
 
 expect :: Parser bc t (Maybe a) -> Parser bc t a
-expect (Try p) = p
-expect Fail    = Fail
-expect p       = Expect p
+expect (Pure Nothing)  = Fail
+expect (Pure (Just a)) = Pure a
+expect Fail            = Fail
+expect p               = Expect p
 
 
 tryP :: Parser bc t a -> Parser bc t (Maybe a)
-tryP Fail       = pure Nothing
-tryP (Expect p) = p
-tryP p          = fmap Just p
-
+tryP Fail           = pure Nothing
+tryP (Expect p)     = p
+tryP (LiftA2 f a b) = LiftA2 (liftA2 f) (tryP a) (tryP b)
+tryP p              = fmap Just p
 

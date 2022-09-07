@@ -45,7 +45,6 @@ instance {-# OVERLAPPABLE #-} (CoArbitrary t, Arbitrary a, Arbitrary bc, CoArbit
   shrink (LiftA2 _ _ _)   = [Fail]
   shrink (Target _ pa')   = Fail : (pure $ fmap pure pa')
   shrink (OnChildren pa') = Fail : (pure $ fmap pure pa')
-  shrink (Try pa')        = Fail : (pure $ fmap pure pa')
   shrink (Project _)      = [Fail]
   shrink (Expect pa')     = Fail : (fmap expect $ shrink pa')
   shrink Fail = []
@@ -158,18 +157,21 @@ type Test = Parser (Set Four) DebugTree
 
 main :: IO ()
 main = do
+  traverse_ quickCheck
+    [ -- expect is a left identity to optional
+      property $ expect . optional =-= id @(Test Int8)
+
+      -- expect distributes over liftA2
+    , property $ \(f :: Int8 -> Four -> Bool) a b ->
+        expect (liftA2 (liftA2 f) a b) =-= liftA2 @Test f (expect a) (expect b)
+
+      -- optional equivalent to tryP
+    , property $ optional @(Test) @Int8 =-= tryP
+    ]
+
   quickBatch $ functor     $ undefined @_ @(Test (Int8, Int8, Int8))
   quickBatch $ applicative $ undefined @_ @(Test (Int8, Int8, Int8))
   quickBatch $ alternative $ undefined @_ @(Test Int8)
   quickBatch $ semigroup   $ undefined @_ @(Test Any, Int8)
   quickBatch $ monoid      $ undefined @_ @(Test Any)
-
-  traverse_ quickCheck
-    [ let a = Pure (-25)
-          b = Fail @(Set Four) @DebugTree @Int8
-          c = expect Fail
-       in ((a <|> b) <|> c) =-= (a <|> (b <|> c))
-
-    , property $ expect . optional =-= id @(Test Int8)
-    ]
 
