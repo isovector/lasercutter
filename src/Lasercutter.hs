@@ -4,37 +4,39 @@ module Lasercutter
   , runParser
   , IsTree (..)
 
-  -- * Primitive parsers
+  -- * Building parsers
+  -- ** Primitives
   , self
   , proj
 
-  -- * Controlling failure
+  -- ** Controlling failure
   , expect
   , one
   , try
   , empty
   , (<|>)
 
-  -- * Traversing trees
+  -- ** Traversing trees
   , onChildren
   , onSingleChild
   , target
   , targetMap
 
-  -- * Conditional parsing
+  -- ** Conditional parsing
   , when
   , whenNode
   , ifS
   , ifNode
 
-  -- * Breadcrumbs
-  -- | All parsers support a notion of _breadcrumbs_ --- a monoid that gets
+  -- ** Breadcrumbs
+  -- | All parsers support a notion of *breadcrumbs* --- a monoid that gets
   -- accumulated along subtrees. Callers to 'runParser' can choose
-  -- a _summarization_ function which describes how to generate the breadcrumb
+  -- a *summarization* function which describes how to generate the breadcrumb
   -- monoid from the current node.
   --
   -- Breadcrumbs are often used to refine the results of 'target', which has no
-  -- notion of history, and thus can be too coarse.
+  -- notion of history, and thus can be too coarse for many position-depending
+  -- parsing tasks.
   , breadcrumbs
   , onBreadcrumbs
   , mapBreadcrumbs
@@ -44,6 +46,9 @@ module Lasercutter
   -- all of these methods are available on 'Parser's.
 
   -- ** 'Profunctor'
+  -- | Even though 'Parser's are contravariant in their breadcrumbs and
+  -- tree type, this instance targets only the tree. Use 'mapBreadcrumbs' to
+  -- modify the breadcrumbs.
   , dimap
   , rmap
   , lmap
@@ -61,6 +66,9 @@ module Lasercutter
   , catMaybes
 
   -- ** 'Selective'
+  -- | 'Parser's are boring 'Selective' functors that are unfortunately unable
+  -- to elide any effects. Nevertheless, the 'Selective' API is often quite
+  -- useful for everyday parsing tasks.
   , select
   , (<*?)
   , branch
@@ -105,7 +113,7 @@ onChildren = OnChildren
 ------------------------------------------------------------------------------
 -- | Run the given parser on every predicate-satisfying subtree of the current
 -- node. This combinator is not recursive --- that is, if the predicate
--- is satisfied by both a node and its descendent, the descendent _will not_
+-- is satisfied by both a node and its descendent, the descendent *will not*
 -- receive the parser.
 target :: (t -> Bool) -> Parser bc t a -> Parser bc t [a]
 target = Target

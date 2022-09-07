@@ -6,7 +6,6 @@ import Control.Applicative
 import Control.Selective
 import Data.Monoid
 import Data.Profunctor
-import Debug.RecoverRTTI (anythingToString)
 import Witherable
 
 
@@ -47,9 +46,6 @@ data Parser bc t a where
   Fail       :: Parser bc t a
   deriving (Semigroup, Monoid) via (Ap (Parser bc t) a)
 
-
-instance Show (Parser bc t a) where
-  show = anythingToString
 
 instance Functor (Parser bc t) where
   fmap = liftA

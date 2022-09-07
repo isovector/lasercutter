@@ -25,7 +25,6 @@ source-repository head
 
 library
   exposed-modules:
-      HTML
       Lasercutter
       Lasercutter.Internal
       Lasercutter.Types
@@ -92,101 +91,9 @@ library
       ViewPatterns
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints
   build-depends:
-      QuickCheck
-    , base >=4.7 && <5
-    , checkers
-    , containers
-    , criterion
-    , deepseq
-    , hspec
+      base >=4.7 && <5
     , profunctors
-    , recover-rtti
-    , scalpel
     , selective
-    , tagsoup
-    , text
-    , witherable
-  default-language: Haskell2010
-
-executable profile-me
-  main-is: Main.hs
-  other-modules:
-      Paths_lasercutter
-  hs-source-dirs:
-      app
-  default-extensions:
-      BangPatterns
-      BinaryLiterals
-      ConstrainedClassMethods
-      ConstraintKinds
-      DataKinds
-      DeriveAnyClass
-      DeriveDataTypeable
-      DeriveFoldable
-      DeriveFunctor
-      DeriveGeneric
-      DeriveLift
-      DeriveTraversable
-      DerivingStrategies
-      DerivingVia
-      DoAndIfThenElse
-      DuplicateRecordFields
-      EmptyCase
-      EmptyDataDecls
-      EmptyDataDeriving
-      ExistentialQuantification
-      ExplicitForAll
-      FlexibleContexts
-      FlexibleInstances
-      ForeignFunctionInterface
-      GADTSyntax
-      GADTs
-      GeneralizedNewtypeDeriving
-      HexFloatLiterals
-      ImplicitPrelude
-      ImportQualifiedPost
-      InstanceSigs
-      KindSignatures
-      LambdaCase
-      MonomorphismRestriction
-      MultiParamTypeClasses
-      NamedFieldPuns
-      NamedWildCards
-      NumericUnderscores
-      OverloadedStrings
-      PatternGuards
-      PolyKinds
-      PostfixOperators
-      RankNTypes
-      RelaxedPolyRec
-      ScopedTypeVariables
-      StandaloneDeriving
-      StandaloneKindSignatures
-      StarIsType
-      StrictData
-      TraditionalRecordSyntax
-      TupleSections
-      TypeApplications
-      TypeFamilies
-      TypeOperators
-      TypeSynonymInstances
-      ViewPatterns
-  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N -O2
-  build-depends:
-      QuickCheck
-    , base >=4.7 && <5
-    , checkers
-    , containers
-    , criterion
-    , deepseq
-    , hspec
-    , lasercutter
-    , profunctors
-    , recover-rtti
-    , scalpel
-    , selective
-    , tagsoup
-    , text
     , witherable
   default-language: Haskell2010
 
@@ -255,23 +162,15 @@ test-suite lasercutter-test
       TypeSynonymInstances
       ViewPatterns
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
-  build-tool-depends:
-      hspec-discover:hspec-discover
   build-depends:
       QuickCheck
     , base >=4.7 && <5
     , checkers
     , containers
-    , criterion
-    , deepseq
-    , hspec
     , lasercutter
     , profunctors
     , recover-rtti
-    , scalpel
     , selective
-    , tagsoup
-    , text
     , witherable
   default-language: Haskell2010
 
@@ -279,6 +178,7 @@ benchmark lasercutter-bench
   type: exitcode-stdio-1.0
   main-is: Main.hs
   other-modules:
+      HTML
       ScalpelSkipScript
       Paths_lasercutter
   hs-source-dirs:
@@ -340,18 +240,14 @@ benchmark lasercutter-bench
       TypeOperators
       TypeSynonymInstances
       ViewPatterns
-  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N -O2
   build-depends:
-      QuickCheck
-    , base >=4.7 && <5
-    , checkers
+      base >=4.7 && <5
     , containers
     , criterion
     , deepseq
-    , hspec
     , lasercutter
     , profunctors
-    , recover-rtti
     , scalpel
     , selective
     , tagsoup

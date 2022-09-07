@@ -3,25 +3,25 @@
 
 module Main where
 
-import Data.Bool (bool)
-import qualified Data.Set as S
-import Data.Set (Set)
-import           Control.Applicative (liftA2)
+import           Control.Applicative (liftA3)
 import           Control.DeepSeq
 import           Control.Exception (evaluate)
 import           Criterion.Main
+import           Data.Bool (bool)
 import           Data.Foldable (find)
 import           Data.Maybe (fromJust, catMaybes)
+import           Data.Set (Set)
+import qualified Data.Set as S
 import           Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import           GHC.Generics (Generic)
 import qualified HTML as Laser
 import qualified Lasercutter as Laser
+import qualified ScalpelSkipScript as Scalpel
 import qualified Text.HTML.Scalpel as Scalpel
 import           Text.HTML.TagSoup (parseTags, Tag(..))
 import           Text.HTML.TagSoup.Tree (tagTree, TagTree(..))
-import qualified ScalpelSkipScript as Scalpel
 
 deriving stock instance Generic (TagTree Text)
 deriving stock instance Generic (Tag Text)
@@ -49,7 +49,7 @@ laserContent :: Laser.Parser bc Laser.HTML [Text]
 laserContent = Laser.chroot (Laser.Both (Laser.HasTag "div") (Laser.WithAttr "class" (== Just "blog-content row"))) $ Laser.texts
 
 laserBodyText :: Laser.Parser (Set Text) Laser.HTML [Text]
-laserBodyText = fmap (filter (not . T.null) . fmap T.strip) $ Laser.chroot (Laser.HasTag "body") $ fmap catMaybes $ Laser.Target Laser.isText $
+laserBodyText = fmap (filter (not . T.null) . fmap T.strip) $ Laser.chroot (Laser.HasTag "body") $ fmap catMaybes $ Laser.target Laser.isText $
   bool
     <$> Laser.text
     <*> pure Nothing
@@ -80,7 +80,7 @@ laserBodyText = fmap (filter (not . T.null) . fmap T.strip) $ Laser.chroot (Lase
           , "h6"
           , "sup"
           , "sub"
-          ]) Laser.GetCrumbs
+          ]) Laser.breadcrumbs
 
 
 main :: IO ()
@@ -102,21 +102,11 @@ main = do
           ]
 
   defaultMain
-    [ bgroup "title"
-        [ benchScalpel scalpelTitle
-        , benchLaser   laserTitle
-        ]
-    , bgroup "content"
-        [ benchScalpel $ scalpelContent
-        , benchLaser   $ laserContent
-        ]
-    , bgroup "content and title"
-        [ benchScalpel $ liftA2 (,) scalpelTitle scalpelContent
-        , benchLaser   $ liftA2 (,) laserTitle   laserContent
-        ]
-    , bgroup "body text"
-        [ benchScalpel scalpelBodyText
-        , benchLaser   laserBodyText
-        ]
+    [ benchThem "title"     scalpelTitle    laserTitle
+    , benchThem "content"   scalpelContent  laserContent
+    , benchThem "body text" scalpelBodyText laserBodyText
+    , benchThem "everything"
+        (liftA3 (,,) scalpelTitle scalpelContent scalpelBodyText)
+        (liftA3 (,,) laserTitle   laserContent   laserBodyText)
     ]
 

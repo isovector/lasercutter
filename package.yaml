@@ -21,16 +21,6 @@ description:         Please see the README on GitHub at <https://github.com/isov
 
 dependencies:
 - base >= 4.7 && < 5
-- tagsoup
-- text
-- QuickCheck
-- hspec
-- checkers
-- recover-rtti
-- criterion
-- scalpel
-- deepseq
-- containers
 - witherable
 - selective
 - profunctors
@@ -105,18 +95,6 @@ ghc-options:
 library:
   source-dirs: src
 
-executables:
-  profile-me:
-    main:                Main.hs
-    source-dirs:         app
-    ghc-options:
-    - -threaded
-    - -rtsopts
-    - -with-rtsopts=-N
-    - -O2
-    dependencies:
-    - lasercutter
-
 benchmarks:
   lasercutter-bench:
     main:                Main.hs
@@ -125,8 +103,16 @@ benchmarks:
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
+    - -O2
     dependencies:
     - lasercutter
+    - criterion
+    - scalpel
+    - tagsoup
+    - text
+    - deepseq
+    - containers
+
 tests:
   lasercutter-test:
     main:                Spec.hs
@@ -137,5 +123,7 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - lasercutter
-    build-tools:
-    - hspec-discover
+    - recover-rtti
+    - QuickCheck
+    - checkers
+    - containers

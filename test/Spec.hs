@@ -8,6 +8,7 @@ import Data.Foldable (traverse_)
 import Data.Int (Int8)
 import Data.Monoid (Any)
 import Data.Set (Set)
+import Debug.RecoverRTTI (anythingToString)
 import GHC.Generics (Generic)
 import Lasercutter
 import Lasercutter.Types
@@ -17,6 +18,9 @@ import Test.QuickCheck.Classes
 
 
 type Test = Parser (Set Four) DebugTree
+
+instance Show (Parser bc t a) where
+  show = anythingToString
 
 
 main :: IO ()
@@ -61,7 +65,6 @@ instance {-# OVERLAPPABLE #-}
   arbitrary
     = let terminal
             = [ Pure <$> arbitrary
-              , Project <$> arbitrary
               , pure Fail
               ]
       in sized $ \ n ->
@@ -80,6 +83,7 @@ instance {-# OVERLAPPABLE #-}
                   <$> (arbitrary @(a -> a -> a))
                   <*> scale (flip div 2) arbitrary
                   <*> scale (flip div 2) arbitrary
+              , fmap <$> arbitrary <*> pure Current
               , expect <$> scale (subtract 1) arbitrary
                ] <> terminal
   shrink (Pure a)         = Fail : (fmap Pure $ shrink a)
@@ -87,7 +91,7 @@ instance {-# OVERLAPPABLE #-}
   shrink (LiftA2 _ _ _)   = [Fail]
   shrink (Target _ pa')   = Fail : (pure $ fmap pure pa')
   shrink (OnChildren pa') = Fail : (pure $ fmap pure pa')
-  shrink (Project _)      = [Fail]
+  shrink Current          = [Fail]
   shrink (Expect pa')     = Fail : (fmap expect $ shrink pa')
   shrink Fail = []
 
@@ -105,7 +109,6 @@ instance
   arbitrary
     = let terminal
             = [ Pure <$> arbitrary
-              , Project <$> arbitrary
               , pure Fail
               ]
       in sized $ \ n ->
@@ -124,16 +127,17 @@ instance
                   <$> arbitrary @(a -> a -> [a])
                   <*> scale (flip div 2) arbitrary
                   <*> scale (flip div 2) arbitrary
+              , fmap <$> arbitrary <*> pure Current
               , Target <$> arbitrary <*> scale (subtract 1) arbitrary
               , OnChildren <$> scale (subtract 1) arbitrary
               , expect <$> scale (subtract 1) arbitrary
               ] <> terminal
   shrink (Pure a)         = Fail : (fmap Pure $ shrink a)
+  shrink Current          = [Fail]
   shrink GetCrumbs        = [Fail]
   shrink (LiftA2 _ _ _)   = [Fail]
   shrink (Target _ pa')   = Fail : (pure $ fmap pure pa')
   shrink (OnChildren pa') = Fail : (pure $ fmap pure pa')
-  shrink (Project _)      = [Fail]
   shrink (Expect pa')     = Fail : (fmap expect $ shrink pa')
   shrink Fail = []
 
@@ -151,7 +155,6 @@ instance
   arbitrary
     = let terminal
             = [ Pure <$> arbitrary
-              , Project <$> arbitrary
               , pure Fail
               ]
       in sized $ \ n ->
@@ -170,13 +173,14 @@ instance
                   <$> arbitrary @(a -> a -> Maybe a)
                   <*> scale (flip div 2) arbitrary
                   <*> scale (flip div 2) arbitrary
+              , fmap <$> arbitrary <*> pure Current
               , try <$> scale (subtract 1) arbitrary
               , expect <$> scale (subtract 1) arbitrary
               ] <> terminal
   shrink (Pure a)         = Fail : (fmap Pure $ shrink a)
   shrink GetCrumbs        = [Fail]
+  shrink Current          = [Fail]
   shrink (LiftA2 _ _ _)   = [Fail]
-  shrink (Project _)      = [Fail]
   shrink (Expect pa')     = Fail : (fmap expect $ shrink pa')
   shrink Fail = []
 
