@@ -33,6 +33,7 @@ dependencies:
 - containers
 - witherable
 - selective
+- profunctors
 
 default-extensions:
 - BangPatterns

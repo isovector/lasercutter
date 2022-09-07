@@ -3,10 +3,11 @@
 module Lasercutter.Types where
 
 import Control.Applicative
+import Control.Selective
+import Data.Monoid
+import Data.Profunctor
 import Debug.RecoverRTTI (anythingToString)
 import Witherable
-import Data.Monoid
-import Control.Selective
 
 
 ------------------------------------------------------------------------------
@@ -70,6 +71,23 @@ instance Selective (Parser bc t) where
 
 instance Filterable (Parser bc t) where
   catMaybes = Expect
+
+instance Profunctor (Parser bc) where
+  lmap = mapTree
+  rmap = fmap
+
+
+------------------------------------------------------------------------------
+-- | Transform the type of tree that a 'Parser' operates over.
+mapTree :: (t -> t') -> Parser bc t' a -> Parser bc t a
+mapTree _ (Pure a)         = Pure a
+mapTree t (LiftA2 f pa pb) = LiftA2 f (mapTree t pa) (mapTree t pb)
+mapTree _ GetCrumbs        = GetCrumbs
+mapTree t (Target p pa)    = Target (p . t) $ mapTree t pa
+mapTree t (OnChildren pa)  = OnChildren $ mapTree t pa
+mapTree t Current          = fmap t Current
+mapTree t (Expect pa)      = Expect $ mapTree t pa
+mapTree _ Fail             = Fail
 
 
 ------------------------------------------------------------------------------

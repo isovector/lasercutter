@@ -99,6 +99,7 @@ library
     , criterion
     , deepseq
     , hspec
+    , profunctors
     , recover-rtti
     , scalpel
     , selective
@@ -180,6 +181,7 @@ executable profile-me
     , deepseq
     , hspec
     , lasercutter
+    , profunctors
     , recover-rtti
     , scalpel
     , selective
@@ -264,6 +266,7 @@ test-suite lasercutter-test
     , deepseq
     , hspec
     , lasercutter
+    , profunctors
     , recover-rtti
     , scalpel
     , selective
@@ -347,6 +350,7 @@ benchmark lasercutter-bench
     , deepseq
     , hspec
     , lasercutter
+    , profunctors
     , recover-rtti
     , scalpel
     , selective

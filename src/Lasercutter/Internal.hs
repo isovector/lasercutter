@@ -23,7 +23,7 @@ split cr p0@(Target se pa) tt
   | otherwise
   = Split p0 $ pure . join
 split cr (Expect pa) tt    = continue expect $ split cr pa tt
-split _ (OnChildren pa') _ = Split pa' pure
+split _ (OnChildren pa) _ = Split pa pure
 split _ Current tt         = ignoreChildren $ pure tt
 split _ Fail _             = Split Fail $ const $ Fail
 
@@ -100,4 +100,5 @@ runParser
     -> Maybe a
 runParser summarize tt =
   getResult . flip (parseNode summarize mempty) tt
+
 
