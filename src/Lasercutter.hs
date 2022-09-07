@@ -5,8 +5,8 @@ module Lasercutter
   , IsTree (..)
 
   -- * Primitive parsers
-  , proj
   , self
+  , proj
 
   -- * Setting expectations
   , expect
@@ -79,8 +79,10 @@ import Witherable (Filterable (..))
 ------------------------------------------------------------------------------
 -- | Project a value out of the current node. This is the main way to build
 -- primitive parsers.
+--
+-- * @'proj' f = 'fmap' f 'self'@
 proj :: (t -> a) -> Parser bc t a
-proj = Project
+proj f = fmap f self
 
 
 ------------------------------------------------------------------------------
@@ -125,10 +127,8 @@ onSingleChild = fmap listToMaybe . onChildren
 
 ------------------------------------------------------------------------------
 -- | Get the current node.
---
--- * @'self' = 'proj' id@
 self :: Parser bc t t
-self = proj id
+self = Current
 
 
 ------------------------------------------------------------------------------

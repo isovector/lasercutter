@@ -24,7 +24,7 @@ split cr p0@(Target se pa) tt
   = Split p0 $ pure . join
 split cr (Expect pa) tt    = continue expect $ split cr pa tt
 split _ (OnChildren pa') _ = Split pa' pure
-split _ (Project f) tt     = ignoreChildren $ pure $ f tt
+split _ Current tt         = ignoreChildren $ pure tt
 split _ Fail _             = Split Fail $ const $ Fail
 
 
@@ -83,7 +83,7 @@ getResult Fail           = Nothing
 getResult GetCrumbs      = error "getResult: impossible"
 getResult (Target _ _)   = error "getResult: impossible"
 getResult (OnChildren _) = error "getResult: impossible"
-getResult (Project _)    = error "getResult: impossible"
+getResult Current        = error "getResult: impossible"
 
 
 ------------------------------------------------------------------------------

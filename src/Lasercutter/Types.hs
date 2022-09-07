@@ -34,8 +34,8 @@ data Parser bc t a where
   Target     :: (t -> Bool) -> Parser bc t a -> Parser bc t [a]
   -- | Run the given parser on each child of the current node.
   OnChildren :: Parser bc t a -> Parser bc t [a]
-  -- | Project a value out of the current node.
-  Project    :: (t -> a) -> Parser bc t a
+  -- | Get the current node.
+  Current    :: Parser bc t t
   -- | Swallow a parsed 'Maybe', failing the parser if it was 'Nothing'. Don't
   -- use this constructor explicitly; prefer 'expect' which maintains some
   -- invariants.
