@@ -102,3 +102,15 @@ runParser summarize tt =
   getResult . flip (parseNode summarize mempty) tt
 
 
+------------------------------------------------------------------------------
+-- | Transformer the breadcrumbs of a 'Parser'.
+mapBreadcrumbs :: (bc' -> bc) -> Parser bc t a -> Parser bc' t a
+mapBreadcrumbs _ (Pure a)         = Pure a
+mapBreadcrumbs t (LiftA2 f pa pb) = LiftA2 f (mapBreadcrumbs t pa) (mapBreadcrumbs t pb)
+mapBreadcrumbs t GetCrumbs        = fmap t GetCrumbs
+mapBreadcrumbs t (Target p pa)    = Target p $ mapBreadcrumbs t pa
+mapBreadcrumbs t (OnChildren pa)  = OnChildren $ mapBreadcrumbs t pa
+mapBreadcrumbs _ Current          = Current
+mapBreadcrumbs t (Expect pa)      = Expect $ mapBreadcrumbs t pa
+mapBreadcrumbs _ Fail             = Fail
+

@@ -8,9 +8,12 @@ module Lasercutter
   , self
   , proj
 
-  -- * Setting expectations
+  -- * Controlling failure
   , expect
   , one
+  , try
+  , empty
+  , (<|>)
 
   -- * Traversing trees
   , onChildren
@@ -19,36 +22,43 @@ module Lasercutter
   , targetMap
 
   -- * Conditional parsing
-  , empty
-  , (<|>)
-  , try
-  , optional
   , when
   , whenNode
   , ifS
   , ifNode
 
   -- * Breadcrumbs
+  -- | All parsers support a notion of _breadcrumbs_ --- a monoid that gets
+  -- accumulated along subtrees. Callers to 'runParser' can choose
+  -- a _summarization_ function which describes how to generate the breadcrumb
+  -- monoid from the current node.
+  --
+  -- Breadcrumbs are often used to refine the results of 'target', which has no
+  -- notion of history, and thus can be too coarse.
   , breadcrumbs
   , onBreadcrumbs
-
-
+  , mapBreadcrumbs
 
   -- * Re-exports
   -- | The 'Parser' is an instance of all of the following classes, and thus
   -- all of these methods are available on 'Parser's.
 
+  -- ** 'Profunctor'
+  , dimap
+  , rmap
+  , lmap
+
   -- ** 'Applicative'
   , liftA2
 
   -- ** 'Alternative'
+  , optional
   , guard
   , asum
 
   -- ** 'Filterable'
   , mapMaybe
   , catMaybes
-  , filter
 
   -- ** 'Selective'
   , select
@@ -74,6 +84,7 @@ import Lasercutter.Internal
 import Lasercutter.Types
 import Prelude hiding (filter)
 import Witherable (Filterable (..))
+import Data.Profunctor
 
 
 ------------------------------------------------------------------------------
