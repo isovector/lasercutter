@@ -161,6 +161,12 @@ main = do
     [ -- expect is a left identity to optional
       property $ expect . optional =-= id @(Test Int8)
 
+    , -- optional is a left identity to expect
+      property $ optional . expect =-= id @(Test (Maybe Int8))
+
+    , -- expect nothing is equivalent to fail
+      property $ expect (pure Nothing) =-= (Fail :: Test Int8)
+
       -- expect distributes over liftA2
     , property $ \(f :: Int8 -> Four -> Bool) a b ->
         expect (liftA2 (liftA2 f) a b) =-= liftA2 @Test f (expect a) (expect b)
