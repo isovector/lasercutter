@@ -87,7 +87,6 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - lasercutter
-    - recover-rtti
     - QuickCheck
     - checkers
     - containers

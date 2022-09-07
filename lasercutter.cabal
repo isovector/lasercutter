@@ -97,7 +97,6 @@ test-suite lasercutter-test
     , containers
     , lasercutter
     , profunctors
-    , recover-rtti
     , selective
     , witherable
   default-language: Haskell2010

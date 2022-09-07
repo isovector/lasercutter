@@ -46,6 +46,17 @@ data Parser bc t a where
   Fail       :: Parser bc t a
   deriving (Semigroup, Monoid) via (Ap (Parser bc t) a)
 
+instance Show (Parser bc t a) where
+  show (Pure _) = "(Pure _)"
+  show (LiftA2 _ pa' pa_bctc) =
+    "(LiftA2 _ " <> show pa' <> " " <> show pa_bctc <> ")"
+  show GetCrumbs = "GetCrumbs"
+  show (Target _ pa') = "(Target _ " <> show pa' <> "')"
+  show (OnChildren pa') = "(OnChildren " <> show pa' <> ")"
+  show Current = "Current"
+  show (Expect pa') = "(Expect " <> show pa' <> ")"
+  show Fail = "Fail"
+
 
 instance Functor (Parser bc t) where
   fmap = liftA
