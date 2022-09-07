@@ -8,7 +8,7 @@ import GHC.Generics (Generic)
 import Lasercutter
 import Lasercutter.Types
 import Test.QuickCheck
-import Test.QuickCheck.Checkers
+import Test.QuickCheck.Checkers hiding (Test)
 import Test.QuickCheck.Classes
 import Data.Foldable (traverse_)
 import Data.Monoid (Any)
@@ -148,22 +148,28 @@ instance (EqProp a) => EqProp (Parser (Set Four) DebugTree a) where
     f <- arbitrary
     pure $ runParser f t p1 =-= runParser f t p2
 
+
 instance EqProp Int8 where
   (=-=) = (===)
 
 
+type Test = Parser (Set Four) DebugTree
+
+
 main :: IO ()
 main = do
-  quickBatch $ functor     $ undefined @_ @(Parser (Set Four) DebugTree (Int8, Int8, Int8))
-  quickBatch $ applicative $ undefined @_ @(Parser (Set Four) DebugTree (Int8, Int8, Int8))
-  quickBatch $ alternative $ undefined @_ @(Parser (Set Four) DebugTree Int8)
-  quickBatch $ semigroup   $ undefined @_ @(Parser (Set Four) DebugTree Any, Int8)
-  quickBatch $ monoid      $ undefined @_ @(Parser (Set Four) DebugTree Any)
+  quickBatch $ functor     $ undefined @_ @(Test (Int8, Int8, Int8))
+  quickBatch $ applicative $ undefined @_ @(Test (Int8, Int8, Int8))
+  quickBatch $ alternative $ undefined @_ @(Test Int8)
+  quickBatch $ semigroup   $ undefined @_ @(Test Any, Int8)
+  quickBatch $ monoid      $ undefined @_ @(Test Any)
 
   traverse_ quickCheck
     [ let a = Pure (-25)
           b = Fail @(Set Four) @DebugTree @Int8
           c = expect Fail
        in ((a <|> b) <|> c) =-= (a <|> (b <|> c))
+
+    , property $ expect . optional =-= id @(Test Int8)
     ]
 
