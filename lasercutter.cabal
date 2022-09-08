@@ -6,7 +6,9 @@ cabal-version: 1.12
 
 name:           lasercutter
 version:        0.1.0.0
+synopsis:       A high-powered, single-pass tree parser.
 description:    Please see the README on GitHub at <https://github.com/isovector/lasercutter#readme>
+category:       Parsing
 homepage:       https://github.com/isovector/lasercutter#readme
 bug-reports:    https://github.com/isovector/lasercutter/issues
 author:         Sandy Maguire

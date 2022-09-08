@@ -100,12 +100,16 @@ import Data.Profunctor
 -- primitive parsers.
 --
 -- * @'proj' f = 'fmap' f 'self'@
+--
+-- @since 0.1.0.0
 proj :: (t -> a) -> Parser bc t a
 proj f = fmap f self
 
 
 ------------------------------------------------------------------------------
 -- | Run the given parser on every immediate child of the current node.
+--
+-- @since 0.1.0.0
 onChildren :: Parser bc t a -> Parser bc t [a]
 onChildren = OnChildren
 
@@ -115,6 +119,8 @@ onChildren = OnChildren
 -- node. This combinator is not recursive --- that is, if the predicate
 -- is satisfied by both a node and its descendent, the descendent *will not*
 -- receive the parser.
+--
+-- @since 0.1.0.0
 target :: (t -> Bool) -> Parser bc t a -> Parser bc t [a]
 target = Target
 
@@ -123,6 +129,8 @@ target = Target
 -- | Get the breadcrumbs at the current node. This is useful for refining the
 -- coarse-grained matches of 'target' by restricting matches to certain
 -- subtrees.
+--
+-- @since 0.1.0.0
 breadcrumbs :: Parser bc t bc
 breadcrumbs = GetCrumbs
 
@@ -131,6 +139,8 @@ breadcrumbs = GetCrumbs
 -- | Get a value computed on the current breadcrumbs.
 --
 -- * @'onBreadcrumbs' f = 'fmap' f 'breadcrumbs'@
+--
+-- @since 0.1.0.0
 onBreadcrumbs :: (bc -> a) -> Parser bc t a
 onBreadcrumbs f = fmap f breadcrumbs
 
@@ -140,12 +150,16 @@ onBreadcrumbs f = fmap f breadcrumbs
 -- first success.
 --
 -- * @'onSingleChild' = 'fmap' 'listToMaybe' . 'onChildren'@
+--
+-- @since 0.1.0.0
 onSingleChild :: Parser bc t a -> Parser bc t (Maybe a)
 onSingleChild = fmap listToMaybe . onChildren
 
 
 ------------------------------------------------------------------------------
 -- | Get the current node.
+--
+-- @since 0.1.0.0
 self :: Parser bc t t
 self = Current
 
@@ -154,6 +168,8 @@ self = Current
 -- | Get the first result of a list of results, failing if there are none.
 --
 -- * @'one' = 'expect' . 'fmap' 'listToMaybe'@
+--
+-- @since 0.1.0.0
 one :: Parser bc t [a] -> Parser bc t a
 one = expect . fmap listToMaybe
 
@@ -161,6 +177,8 @@ one = expect . fmap listToMaybe
 ------------------------------------------------------------------------------
 -- | @'when' pc pa@ returns @pa@ when @pc@ evaluates to 'True', failing
 -- otherwise.
+--
+-- @since 0.1.0.0
 when
     :: Parser bc t Bool
     -> Parser bc t a
@@ -173,6 +191,8 @@ when b tr = expect $ ifS b (fmap Just tr) $ pure Nothing
 -- current node, running @pf@ otherwise.
 --
 -- * @'ifNode' f tr fl = 'ifS' ('proj' f) tr fl@
+--
+-- @since 0.1.0.0
 ifNode
     :: (t -> Bool)
     -> Parser bc t a
@@ -186,6 +206,8 @@ ifNode f tr fl = ifS (proj f) tr fl
 -- current node, failing otherwise.
 --
 -- * @'whenNode' = 'when' . 'proj'@
+--
+-- @since 0.1.0.0
 whenNode :: (t -> Bool) -> Parser bc t a -> Parser bc t a
 whenNode = when . proj
 
@@ -193,6 +215,8 @@ whenNode = when . proj
 ------------------------------------------------------------------------------
 -- | Run the given function on every subtree, accumulating those which return
 -- 'Just'.
+--
+-- @since 0.1.0.0
 targetMap :: (t -> Maybe a) -> Parser bc t [a]
 targetMap f = fmap catMaybes $ target (isJust  . f) $ proj f
 

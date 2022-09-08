@@ -9,6 +9,8 @@ import Lasercutter.Types
 ------------------------------------------------------------------------------
 -- | Split a parser into a parser to run on the node's children, and how to
 -- reassemble those pieces into a parser for the current node.
+--
+-- @since 0.1.0.0
 split :: bc -> Parser bc t a -> t -> Split bc t a
 split _ (Pure a) _         = ignoreChildren $ pure a
 split cr GetCrumbs _       = ignoreChildren $ pure cr
@@ -30,12 +32,16 @@ split _ Fail _             = Split Fail $ const $ Fail
 
 ------------------------------------------------------------------------------
 -- | There is no work to do for the children, so ignore them.
+--
+-- @since 0.1.0.0
 ignoreChildren :: Parser bc t b -> Split bc t b
 ignoreChildren = Split (pure ()) . const
 
 
 ------------------------------------------------------------------------------
 -- | Append a continuation after a 'Split'.
+--
+-- @since 0.1.0.0
 continue :: (Parser bc t a -> Parser bc t b) -> Split bc t a -> Split bc t b
 continue f (Split p k) = Split p $ f . k
 
@@ -43,6 +49,8 @@ continue f (Split p k) = Split p $ f . k
 ------------------------------------------------------------------------------
 -- | Parse the current node by splitting the parser, accumulating the results
 -- of each child, and then running the continuation.
+--
+-- @since 0.1.0.0
 parseNode
     :: (Semigroup bc, IsTree t)
     => (t -> bc)
@@ -60,6 +68,8 @@ parseNode summarize cr p tt =
 
 ------------------------------------------------------------------------------
 -- | Run a parser on each child, accumulating the results.
+--
+-- @since 0.1.0.0
 parseChildren
     :: (IsTree t, Semigroup bc)
     => (t -> bc)
@@ -75,6 +85,8 @@ parseChildren summarize cr pa =
 -- | Extract a value from a parser. The way the applicative evaluates,
 -- all "combinator" effects are guaranteed to have been run by the time this
 -- function gets called.
+--
+-- @since 0.1.0.0
 getResult :: Parser bc t a -> Maybe a
 getResult (Pure a)       = pure a
 getResult (LiftA2 f a b) = liftA2 f (getResult a) (getResult b)
@@ -88,6 +100,8 @@ getResult Current        = error "getResult: impossible"
 
 ------------------------------------------------------------------------------
 -- | Run a parser over a tree in a single pass.
+--
+-- @since 0.1.0.0
 runParser
     :: (Monoid bc, IsTree t)
     => (t -> bc)
@@ -104,6 +118,8 @@ runParser summarize tt =
 
 ------------------------------------------------------------------------------
 -- | Transformer the breadcrumbs of a 'Parser'.
+--
+-- @since 0.1.0.0
 mapBreadcrumbs :: (bc' -> bc) -> Parser bc t a -> Parser bc' t a
 mapBreadcrumbs _ (Pure a)         = Pure a
 mapBreadcrumbs t (LiftA2 f pa pb) = LiftA2 f (mapBreadcrumbs t pa) (mapBreadcrumbs t pb)

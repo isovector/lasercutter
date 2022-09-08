@@ -12,8 +12,12 @@ import Witherable
 ------------------------------------------------------------------------------
 -- | Lasercutter supports any inductive tree types, as witnessed by
 -- 'getChildren'.
+--
+-- @since 0.1.0.0
 class IsTree t where
   -- | Get all children of the current node.
+  --
+  -- @since 0.1.0.0
   getChildren :: t -> [t]
 
 
@@ -21,28 +25,46 @@ class IsTree t where
 -- | A tree parser which runs all queries in a single pass. This is
 -- accomplished via a free encoding of the applicative structure, which can be
 -- arbitrarily reassociated for better performance.
+--
+-- @since 0.1.0.0
 data Parser bc t a where
   -- | The free 'pure' constructor.
+  --
+  -- @since 0.1.0.0
   Pure       :: a -> Parser bc t a
   -- | The free 'liftA2' constructor. This is an inlining of Day convolution.
+  --
+  -- @since 0.1.0.0
   LiftA2     :: (b -> c -> a) -> Parser bc t b -> Parser bc t c -> Parser bc t a
   -- | Get the breadcrumbs at the current part of the tree.
+  --
+  -- @since 0.1.0.0
   GetCrumbs  :: Parser bc t bc
   -- | Run the given parser at every subtree which matches the given predicate.
   -- This is not recursive --- that is, a given subtree only runs the given
   -- parser once, not in all further matching subtrees.
+  --
+  -- @since 0.1.0.0
   Target     :: (t -> Bool) -> Parser bc t a -> Parser bc t [a]
   -- | Run the given parser on each child of the current node.
+  --
+  -- @since 0.1.0.0
   OnChildren :: Parser bc t a -> Parser bc t [a]
   -- | Get the current node.
+  --
+  -- @since 0.1.0.0
   Current    :: Parser bc t t
   -- | Swallow a parsed 'Maybe', failing the parser if it was 'Nothing'. Don't
   -- use this constructor explicitly; prefer 'expect' which maintains some
   -- invariants.
   --
   -- 'optional' is the inverse to this parser.
+  --
+  -- @since 0.1.0.0
   Expect     :: Parser bc t (Maybe a) -> Parser bc t a
   -- | Immediately fail a parse. Equivalent to @'Expect' ('pure' 'Nothing')@.
+  --
+  -- @since 0.1.0.0
   Fail       :: Parser bc t a
   deriving (Semigroup, Monoid) via (Ap (Parser bc t) a)
 
@@ -86,6 +108,8 @@ instance Profunctor (Parser bc) where
 
 ------------------------------------------------------------------------------
 -- | Transform the type of tree that a 'Parser' operates over.
+--
+-- @since 0.1.0.0
 mapTree :: (t -> t') -> Parser bc t' a -> Parser bc t a
 mapTree _ (Pure a)         = Pure a
 mapTree t (LiftA2 f pa pb) = LiftA2 f (mapTree t pa) (mapTree t pb)
@@ -100,6 +124,8 @@ mapTree _ Fail             = Fail
 ------------------------------------------------------------------------------
 -- | A parser to run on children, and a subsequent continuation for how to
 -- parse the parent.
+--
+-- @since 0.1.0.0
 data Split bc t a where
   Split
       :: Parser bc t a
@@ -113,6 +139,8 @@ data Split bc t a where
 -- | Swallow a parsed 'Maybe', failing the parser if it was 'Nothing'.
 --
 -- Use 'try' or 'optional' as the inverse to this parser.
+--
+-- @since 0.1.0.0
 expect :: Parser bc t (Maybe a) -> Parser bc t a
 expect (Pure Nothing)  = Fail
 expect (Pure (Just a)) = Pure a
@@ -121,6 +149,8 @@ expect p               = Expect p
 
 ------------------------------------------------------------------------------
 -- | Like 'optional', but slightly more efficient.
+--
+-- @since 0.1.0.0
 try :: Parser bc t a -> Parser bc t (Maybe a)
 try Fail           = pure Nothing
 try (Expect p)     = p
