@@ -1,5 +1,8 @@
 # lasercutter
 
+[![Hackage](https://img.shields.io/hackage/v/lasercutter.svg?logo=haskell&label=lasercutter)](https://hackage.haskell.org/package/lasercutter)
+
+
 ## Dedication
 
 > The scalpel won't make you happy.
