@@ -111,7 +111,8 @@ proj f = fmap f self
 --
 -- @since 0.1.0.0
 onChildren :: Parser bc t a -> Parser bc t [a]
-onChildren = OnChildren
+onChildren (Fmap faa pa') = Fmap (fmap faa) $ onChildren pa'
+onChildren p = OnChildren p
 
 
 ------------------------------------------------------------------------------
@@ -122,7 +123,9 @@ onChildren = OnChildren
 --
 -- @since 0.1.0.0
 target :: (t -> Bool) -> Parser bc t a -> Parser bc t [a]
-target = Target
+target f (Fmap faa pa') = fmap (fmap faa) $ target f pa'
+target _ Fail = Fail
+target f a = Target f a
 
 
 ------------------------------------------------------------------------------
