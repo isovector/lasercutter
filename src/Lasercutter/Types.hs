@@ -28,6 +28,8 @@ class IsTree t where
 --
 -- @since 0.1.0.0
 data Parser bc t a where
+  -- @since TODO
+  Fmap       :: (a -> b) -> Parser bc t a -> Parser bc t b
   -- | The free 'pure' constructor.
   --
   -- @since 0.1.0.0
@@ -69,6 +71,7 @@ data Parser bc t a where
   deriving (Semigroup, Monoid) via (Ap (Parser bc t) a)
 
 instance Show (Parser bc t a) where
+  show (Fmap _ p) = "(Fmap _" <> show p <> ")"
   show (Pure _) = "(Pure _)"
   show (LiftA2 _ pa' pa_bctc) =
     "(LiftA2 _ " <> show pa' <> " " <> show pa_bctc <> ")"
@@ -81,11 +84,19 @@ instance Show (Parser bc t a) where
 
 
 instance Functor (Parser bc t) where
-  fmap = liftA
+  fmap f (Fmap g a)     = fmap (f . g) a
+  fmap f (Pure a)       = Pure (f a)
+  fmap f (LiftA2 g a b) = LiftA2 ((f .) . g) a b
+  fmap _ Fail           = Fail
+  fmap f (Expect p)     = Expect $ fmap (fmap f) p
+  fmap f a              = Fmap f a
 
 instance Applicative (Parser bc t) where
   pure = Pure
-  liftA2 f (Pure a) (Pure b) = Pure $ f a b
+  liftA2 f (Pure a) (Pure b)       = Pure $ f a b
+  liftA2 f (Fmap fa a) (Fmap fb b) = liftA2 (\x y -> f (fa x) (fb y)) a b
+  liftA2 f (Fmap fa a) b           = liftA2 (\x y -> f (fa x) y) a b
+  liftA2 f a (Fmap fb b)           = liftA2 (\x y -> f x (fb y)) a b
   liftA2 _ Fail _ = Fail
   liftA2 _ _ Fail = Fail
   liftA2 f a b    = LiftA2 f a b
@@ -111,6 +122,7 @@ instance Profunctor (Parser bc) where
 --
 -- @since 0.1.0.0
 mapTree :: (t -> t') -> Parser bc t' a -> Parser bc t a
+mapTree t (Fmap f a)       = Fmap f (mapTree t a)
 mapTree _ (Pure a)         = Pure a
 mapTree t (LiftA2 f pa pb) = LiftA2 f (mapTree t pa) (mapTree t pb)
 mapTree _ GetCrumbs        = GetCrumbs

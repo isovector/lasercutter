@@ -12,6 +12,8 @@ import Lasercutter.Types
 --
 -- @since 0.1.0.0
 split :: bc -> Parser bc t a -> t -> Split bc t a
+split cr (Fmap f a) tt     =
+  continue (Fmap f) $ split cr a tt
 split _ (Pure a) _         = ignoreChildren $ pure a
 split cr GetCrumbs _       = ignoreChildren $ pure cr
 split cr (LiftA2 f l r) tt =
@@ -88,6 +90,7 @@ parseChildren summarize cr pa =
 --
 -- @since 0.1.0.0
 getResult :: Parser bc t a -> Maybe a
+getResult (Fmap f a)     = fmap f $ getResult a
 getResult (Pure a)       = pure a
 getResult (LiftA2 f a b) = liftA2 f (getResult a) (getResult b)
 getResult (Expect pa)    = join $ getResult pa
@@ -121,6 +124,7 @@ runParser summarize tt =
 --
 -- @since 0.1.0.0
 mapBreadcrumbs :: (bc' -> bc) -> Parser bc t a -> Parser bc' t a
+mapBreadcrumbs t (Fmap f a)       = Fmap f (mapBreadcrumbs t a)
 mapBreadcrumbs _ (Pure a)         = Pure a
 mapBreadcrumbs t (LiftA2 f pa pb) = LiftA2 f (mapBreadcrumbs t pa) (mapBreadcrumbs t pb)
 mapBreadcrumbs t GetCrumbs        = fmap t GetCrumbs

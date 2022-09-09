@@ -79,9 +79,13 @@ instance {-# OVERLAPPABLE #-}
                   <$> (arbitrary @(a -> a -> a))
                   <*> scale (flip div 2) arbitrary
                   <*> scale (flip div 2) arbitrary
+              , fmap <$> arbitrary @(bc -> a) <*> arbitrary
+              , fmap <$> arbitrary @(Bool -> a) <*> arbitrary
+              , fmap <$> arbitrary @(Int8 -> a) <*> arbitrary
               , fmap <$> arbitrary <*> pure Current
               , expect <$> scale (subtract 1) arbitrary
                ] <> terminal
+  shrink (Fmap _ _)       = [Fail]
   shrink (Pure a)         = Fail : (fmap Pure $ shrink a)
   shrink GetCrumbs        = [Fail]
   shrink (LiftA2 _ _ _)   = [Fail]
@@ -123,11 +127,15 @@ instance
                   <$> arbitrary @(a -> a -> [a])
                   <*> scale (flip div 2) arbitrary
                   <*> scale (flip div 2) arbitrary
+              , fmap <$> arbitrary @(bc -> [a]) <*> arbitrary
+              , fmap <$> arbitrary @(Bool -> [a]) <*> arbitrary
+              , fmap <$> arbitrary @(Int8 -> [a]) <*> arbitrary
               , fmap <$> arbitrary <*> pure Current
               , Target <$> arbitrary <*> scale (subtract 1) arbitrary
               , OnChildren <$> scale (subtract 1) arbitrary
               , expect <$> scale (subtract 1) arbitrary
               ] <> terminal
+  shrink (Fmap _ _)       = [Fail]
   shrink (Pure a)         = Fail : (fmap Pure $ shrink a)
   shrink Current          = [Fail]
   shrink GetCrumbs        = [Fail]
@@ -169,10 +177,14 @@ instance
                   <$> arbitrary @(a -> a -> Maybe a)
                   <*> scale (flip div 2) arbitrary
                   <*> scale (flip div 2) arbitrary
+              , fmap <$> arbitrary @(bc -> Maybe a) <*> arbitrary
+              , fmap <$> arbitrary @(Bool -> Maybe a) <*> arbitrary
+              , fmap <$> arbitrary @(Int8 -> Maybe a) <*> arbitrary
               , fmap <$> arbitrary <*> pure Current
               , try <$> scale (subtract 1) arbitrary
               , expect <$> scale (subtract 1) arbitrary
               ] <> terminal
+  shrink (Fmap _ _)       = [Fail]
   shrink (Pure a)         = Fail : (fmap Pure $ shrink a)
   shrink GetCrumbs        = [Fail]
   shrink Current          = [Fail]
