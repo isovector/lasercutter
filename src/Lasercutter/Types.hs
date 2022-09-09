@@ -93,7 +93,9 @@ instance Functor (Parser bc t) where
 
 instance Applicative (Parser bc t) where
   pure = Pure
-  liftA2 f (Pure a) (Pure b)       = Pure $ f a b
+  liftA2 f (Pure a) (Pure b) = Pure $ f a b
+  liftA2 f (Pure a) b        = fmap (f a) b
+  liftA2 f a (Pure b)        = fmap (flip f b) a
   liftA2 f (Fmap fa a) (Fmap fb b) = liftA2 (\x y -> f (fa x) (fb y)) a b
   liftA2 f (Fmap fa a) b           = liftA2 (\x y -> f (fa x) y) a b
   liftA2 f a (Fmap fb b)           = liftA2 (\x y -> f x (fb y)) a b
