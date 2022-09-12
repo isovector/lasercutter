@@ -1,0 +1,7 @@
+cradle:
+  stack:
+    - path: "bench"
+      component: "lasercutter:bench:lasercutter-bench"
+
+    - path: "test"
+      component: "lasercutter:test:lasercutter-test"
