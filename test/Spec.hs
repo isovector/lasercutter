@@ -38,6 +38,10 @@ main = do
       -- optional equivalent to try
     , property $ optional @(Test) @Int8 =-= try
 
+      -- OnChildren behaves like its model
+    , property $ \f t ->
+        runParser (const ()) t (OnChildren $ proj f) == Just (childrenModel f t)
+
       -- Target behaves like its model
     , property $ \f t ->
         runParser (const ()) t (Target f self) == Just (findModel f t)
@@ -51,11 +55,15 @@ main = do
   quickBatch $ monoid      $ undefined @_ @(Test Any)
 
 
+childrenModel :: (DebugTree -> Int8) -> DebugTree -> [Int8]
+childrenModel _ (Leaf _) = []
+childrenModel f (Branch _ ts) = fmap f ts
+
+
 findModel :: (DebugTree -> Bool) -> DebugTree -> [DebugTree]
 findModel f t
   | f t       = [t]
   | otherwise = concatMap (findModel f) $ getChildren t
-
 
 
 ------------------------------------------------------------------------------
