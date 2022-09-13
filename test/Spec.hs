@@ -37,6 +37,10 @@ main = do
 
       -- optional equivalent to try
     , property $ optional @(Test) @Int8 =-= try
+
+      -- Target behaves like its model
+    , property $ \f t ->
+        runParser (const ()) t (Target f self) == Just (findModel f t)
     ]
 
   quickBatch $ functor     $ undefined @_ @(Test (Int8, Int8, Int8))
@@ -45,6 +49,13 @@ main = do
   quickBatch $ alternative $ undefined @_ @(Test Int8)
   quickBatch $ semigroup   $ undefined @_ @(Test Any, Int8)
   quickBatch $ monoid      $ undefined @_ @(Test Any)
+
+
+findModel :: (DebugTree -> Bool) -> DebugTree -> [DebugTree]
+findModel f t
+  | f t       = [t]
+  | otherwise = concatMap (findModel f) $ getChildren t
+
 
 
 ------------------------------------------------------------------------------
