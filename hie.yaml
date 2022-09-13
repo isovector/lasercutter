@@ -1,5 +1,8 @@
 cradle:
   stack:
+    - path: "src"
+      component: "lasercutter:lib"
+
     - path: "bench"
       component: "lasercutter:bench:lasercutter-bench"
 
